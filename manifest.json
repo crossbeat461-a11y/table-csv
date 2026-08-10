@@ -1,9 +1,10 @@
 {
   "id": "table-csv",
   "name": "TableCSV",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "minAppVersion": "1.5.0",
-  "description": "Open CSV files as tables inside Obsidian.",
+  "description": "Open CSV files as readable tables with a simple text filter.",
   "author": "K-Tech Studio",
+  "authorUrl": "https://github.com/crossbeat461-a11y",
   "isDesktopOnly": false
 }
