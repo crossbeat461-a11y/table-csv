@@ -1,0 +1,53 @@
+.table-csv-view {
+  padding: 8px 12px;
+  overflow: auto;
+  height: 100%;
+}
+
+.table-csv-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.table-csv-toolbar input {
+  flex: 1;
+  min-width: 160px;
+}
+
+.table-csv-meta {
+  opacity: 0.7;
+  font-size: 0.85em;
+  margin-bottom: 8px;
+}
+
+.table-csv-table {
+  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+  font-size: 0.9em;
+}
+
+.table-csv-table th,
+.table-csv-table td {
+  border: 1px solid var(--background-modifier-border);
+  padding: 4px 8px;
+  text-align: left;
+  white-space: nowrap;
+  max-width: 28em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table-csv-table th {
+  position: sticky;
+  top: 0;
+  background: var(--background-secondary);
+  z-index: 1;
+}
+
+.table-csv-table tr:nth-child(even) td {
+  background: var(--background-primary-alt);
+}
