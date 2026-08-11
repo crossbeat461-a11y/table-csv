@@ -1,0 +1,55 @@
+name: Release Obsidian plugin
+
+on:
+  push:
+    tags:
+      - '[0-9]*'
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate manifest
+        run: |
+          VERSION=$(jq -r .version manifest.json)
+          TAG="${GITHUB_REF_NAME}"
+          if [ "$VERSION" != "$TAG" ]; then
+            echo "manifest.json version ($VERSION) must match git tag ($TAG)"
+            exit 1
+          fi
+          DESC=$(jq -r .description manifest.json)
+          if echo "$DESC" | grep -iq obsidian; then
+            echo "manifest description must not include the word Obsidian"
+            exit 1
+          fi
+          for f in main.js manifest.json styles.css; do
+            test -f "$f" || { echo "Missing required release file: $f"; exit 1; }
+          done
+
+      - name: Attest plugin artifacts
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: TableCSV ${{ github.ref_name }}
+          files: |
+            main.js
+            manifest.json
+            styles.css
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

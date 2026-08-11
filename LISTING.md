@@ -2,6 +2,12 @@
 
 Paste these values in the developer dashboard.
 
+## Important (automated review)
+
+- **`manifest.json` → `description` must NOT contain the word `Obsidian`.**
+- **GitHub Release title** must include the version (e.g. `TableCSV 1.0.4`). CI sets this on tag push.
+- **Release assets** (`main.js`, `manifest.json`, `styles.css`) are published via GitHub Actions with **artifact attestations**.
+
 ## Short description
 
 ```
