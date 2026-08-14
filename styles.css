@@ -12,7 +12,7 @@
   flex-wrap: wrap;
 }
 
-.table-csv-toolbar input {
+.table-csv-toolbar input[type="search"] {
   flex: 1;
   min-width: 160px;
 }
@@ -50,4 +50,38 @@
 
 .table-csv-table tr:nth-child(even) td {
   background: var(--background-primary-alt);
+}
+
+.table-csv-gutter {
+  width: 2.5em;
+  text-align: right;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  left: 0;
+  z-index: 2;
+}
+
+.table-csv-table th.is-selected,
+.table-csv-table td.is-selected {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -2px;
+}
+
+.table-csv-cell-input {
+  display: block;
+  width: 100%;
+  min-width: 4em;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+}
+
+.table-csv-view.is-edit .table-csv-table th,
+.table-csv-view.is-edit .table-csv-table td {
+  overflow: visible;
+  text-overflow: clip;
+  padding: 2px 4px;
 }
