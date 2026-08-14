@@ -6,20 +6,21 @@ Paste these values in the developer dashboard.
 
 - **`manifest.json` → `description` must NOT contain the word `Obsidian`.**
 - **`authorUrl`** must be a GitHub **profile** URL, not the plugin repository.
-- **GitHub Release title** must include the version (e.g. `TableCSV 1.0.5`). CI sets this on tag push.
+- **GitHub Release title** must include the version (e.g. `TableCSV 1.1.0`). CI sets this on tag push.
 - **Release assets** (`main.js`, `manifest.json`, `styles.css`) are published via GitHub Actions with **artifact attestations**.
 
 ## Short description
 
 ```
-Open CSV files as readable tables with a simple text filter.
+Open CSV files as tables. View with a text filter, or edit cells, rows, and columns.
 ```
 
 ## Longer description (if available)
 
 ```
-TableCSV opens .csv files as clean, readable tables inside your vault.
-Use the built-in filter to quickly find rows. Fully offline — no network requests.
+TableCSV opens .csv files as tables inside your vault.
+View mode filters rows without changing the file.
+Edit mode updates cells, rows, and columns, then saves. Fully offline — no network requests.
 ```
 
 ## Suggested categories / tags

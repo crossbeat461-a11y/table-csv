@@ -1,9 +1,9 @@
 {
   "id": "table-csv",
   "name": "TableCSV",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "minAppVersion": "1.5.0",
-  "description": "Open CSV files as readable tables with a simple text filter.",
+  "description": "Open CSV files as tables. View with a text filter, or edit cells, rows, and columns.",
   "author": "K-Tech Studio",
   "authorUrl": "https://github.com/crossbeat461-a11y",
   "isDesktopOnly": false
