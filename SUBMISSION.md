@@ -7,7 +7,7 @@ Use **release `1.1.0` or later** (GitHub Actions + artifact attestations).
 1. Bump `version` in `manifest.json` (must match the git tag).
 2. Ensure `description` does **not** include the word **Obsidian**.
 3. Commit and push to `main`.
-4. Create and push tag: `git tag 1.1.0 && git push origin 1.1.0`
+4. Create and push tag: `git tag 1.1.1 && git push origin 1.1.1`
 5. Wait for [Release workflow](https://github.com/crossbeat461-a11y/table-csv/actions) to finish.
 6. In [developer dashboard](https://obsidian.md/community), point the listing at the new GitHub release.
 
