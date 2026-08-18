@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.2
+
+- Fix the post-update Buy Me a Coffee dialog so it also appears when upgrading from versions that had no version tracking yet
+- Open the dialog after the workspace layout is ready
+
+### 日本語
+
+- バージョン記録が無かった版からの更新でも、Buy Me a Coffee の案内が出るように修正
+- ワークスペース準備後にダイアログを開くように変更
+
 ## 1.2.1
 
 - After an update, show an optional Buy Me a Coffee prompt once per release
