@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0
+
+- View mode: click a column header to sort (asc → desc → clear). Filter and sort do not change the file
+
+### 日本語
+
+- 閲覧モードで列見出しをクリックして並べ替え（昇順 → 降順 → 解除）。フィルター・ソートはファイルを書き換えません
+
 ## 1.2.2
 
 - Fix the post-update Buy Me a Coffee dialog so it also appears when upgrading from versions that had no version tracking yet
