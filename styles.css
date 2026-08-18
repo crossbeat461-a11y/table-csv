@@ -17,6 +17,14 @@
   min-width: 160px;
 }
 
+.table-csv-bmc-btn {
+  opacity: 0.85;
+}
+
+.table-csv-bmc-btn:hover {
+  opacity: 1;
+}
+
 .table-csv-meta {
   opacity: 0.7;
   font-size: 0.85em;
@@ -84,4 +92,27 @@
   overflow: visible;
   text-overflow: clip;
   padding: 2px 4px;
+}
+
+.table-csv-bmc-modal h2 {
+  margin-top: 0;
+}
+
+.table-csv-bmc-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 1rem;
+}
+
+.table-csv-bmc-hide {
+  margin-top: 1rem;
+  font-size: 0.9em;
+  opacity: 0.85;
+}
+
+.table-csv-bmc-hide label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
 }
