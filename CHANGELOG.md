@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.1
+
+- After an update, show an optional Buy Me a Coffee prompt once per release
+- Add a setting to hide the post-update prompt
+- Add a Buy Me a Coffee button in the CSV toolbar (next to Copy)
+
+### 日本語
+
+- アップデート後、リリースごとに1回だけ Buy Me a Coffee の案内を表示（任意）
+- 更新後の案内を出さない設定を追加
+- CSV を開いたときのツールバー（Copy の横）に Buy Me a Coffee ボタンを追加
+
 ## 1.2.0
 
 - Copy the table to the OS clipboard (tab-separated, plus HTML for spreadsheet apps)

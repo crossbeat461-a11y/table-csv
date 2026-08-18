@@ -434,6 +434,15 @@ class TableCsvView extends obsidian.TextFileView {
       self.copyTable();
     });
 
+    var bmcBtn = toolbar.createEl('button', {
+      cls: 'table-csv-bmc-btn',
+      text: t('☕ Buy Me a Coffee', '☕ Buy Me a Coffee'),
+      type: 'button',
+    });
+    bmcBtn.addEventListener('click', function () {
+      window.open(BMC_URL, '_blank');
+    });
+
     if (this.mode === 'view') {
       var input = toolbar.createEl('input', {
         type: 'search',
@@ -570,6 +579,83 @@ class TableCsvView extends obsidian.TextFileView {
   }
 }
 
+var BMC_URL = 'https://buymeacoffee.com/k_tech_studio';
+
+function isJapaneseLocale() {
+  try {
+    return String((window.localStorage && window.localStorage.getItem('language')) || '')
+      .toLowerCase()
+      .startsWith('ja');
+  } catch (e) {
+    return false;
+  }
+}
+
+function t(ja, en) {
+  return isJapaneseLocale() ? ja : en;
+}
+
+class UpdateBmcModal extends obsidian.Modal {
+  constructor(app, version, onDismiss) {
+    super(app);
+    this.version = version;
+    this.onDismiss = onDismiss;
+  }
+
+  onOpen() {
+    var self = this;
+    var content = this.contentEl;
+    content.empty();
+    content.addClass('table-csv-bmc-modal');
+
+    content.createEl('h2', {
+      text: t('TableCSV を更新しました', 'TableCSV updated'),
+    });
+    content.createEl('p', {
+      text: t(
+        'v' + this.version + ' へ更新されました。役に立ったら、開発の励みにしてください（任意）。',
+        'Updated to v' + this.version + '. If this plugin helps, consider a coffee (optional).',
+      ),
+    });
+
+    var actions = content.createDiv({ cls: 'table-csv-bmc-actions' });
+    var coffeeBtn = actions.createEl('button', {
+      cls: 'mod-cta',
+      text: t('☕ Buy Me a Coffee', '☕ Buy Me a Coffee'),
+      type: 'button',
+    });
+    coffeeBtn.addEventListener('click', function () {
+      window.open(BMC_URL, '_blank');
+    });
+
+    var closeBtn = actions.createEl('button', {
+      text: t('閉じる', 'Close'),
+      type: 'button',
+    });
+    closeBtn.addEventListener('click', function () {
+      self.close();
+    });
+
+    var hideRow = content.createDiv({ cls: 'table-csv-bmc-hide' });
+    var hideLabel = hideRow.createEl('label');
+    var hideCheck = hideLabel.createEl('input', { type: 'checkbox' });
+    hideLabel.createSpan({
+      text: t('更新後はこの案内を出さない', 'Do not show this after updates'),
+    });
+    hideCheck.addEventListener('change', function () {
+      self.skipNext = hideCheck.checked;
+    });
+    this.skipNext = false;
+  }
+
+  onClose() {
+    this.contentEl.empty();
+    if (typeof this.onDismiss === 'function') {
+      this.onDismiss(this.skipNext);
+    }
+  }
+}
+
 class TableCsvPlugin extends obsidian.Plugin {
   async onload() {
     this.registerView(VIEW_TYPE, function (leaf) {
@@ -584,6 +670,29 @@ class TableCsvPlugin extends obsidian.Plugin {
       console.warn('table-csv: registerExtensions', e);
     }
     console.info('table-csv: loaded');
+    await this.maybeShowBmcAfterUpdate();
+  }
+
+  async maybeShowBmcAfterUpdate() {
+    var current = this.manifest.version;
+    var data = (await this.loadData()) || {};
+    var prev = data.lastSeenVersion;
+
+    if (prev && prev !== current && !data.hideBmcAfterUpdate) {
+      var self = this;
+      new UpdateBmcModal(this.app, current, function (skipNext) {
+        if (skipNext) {
+          self.saveData(Object.assign({}, data, {
+            lastSeenVersion: current,
+            hideBmcAfterUpdate: true,
+          }));
+        }
+      }).open();
+    }
+
+    if (prev !== current) {
+      await this.saveData(Object.assign({}, data, { lastSeenVersion: current }));
+    }
   }
 }
 
