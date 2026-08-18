@@ -9,11 +9,19 @@
 ![Obsidian](https://img.shields.io/badge/Obsidian-1.5.0%2B-483699?style=for-the-badge&logo=obsidian&logoColor=white)
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/k_tech_studio)
 
-Open `.csv` files as tables inside your vault. View and filter, or edit cells, rows, and columns.
+**[English](#readme-en)** · **[日本語](#readme-ja)**
 
 ![TableCSV screenshot](./images/screenshot.png)
 
-## Features
+---
+
+<a id="readme-en"></a>
+
+## English
+
+Open `.csv` files as tables inside your vault. View and filter, or edit cells, rows, and columns.
+
+### Features
 
 - Open any CSV file as a clean table view
 - Sticky header row for easier scrolling
@@ -24,7 +32,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 - Empty rows and columns stay as you left them
 - Works fully offline (no network requests)
 
-## How to use
+### How to use
 
 1. Install **TableCSV** from Community plugins and enable it
 2. Open a `.csv` file from the file explorer
@@ -34,24 +42,78 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 6. **Copy** puts the table on the system clipboard. In View mode this is the header plus filtered rows; in Edit mode it is the whole table
 7. In **Edit**, **Paste** replaces the table with clipboard data (tab-separated from Excel, or comma-separated). `Ctrl+V` / `Cmd+V` does the same when focus is not inside a cell
 
-## Tips
+### Tips
 
 - Very large CSV files may take longer to render
 - View mode never writes. Edit mode saves to the same `.csv` file in the vault
 - Copy uses the system clipboard. It does not require a companion spreadsheet plugin
 
-## Changelog
+### Changelog
 
 See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.2.0** — copy and paste tables through the OS clipboard.
 
-## Author
+### Author
 
 K-Tech Studio
 
-## Support
+### Support
 
 [Buy Me a Coffee](https://buymeacoffee.com/k_tech_studio)
 
-## License
+### License
 
 MIT
+
+---
+
+<a id="readme-ja"></a>
+
+<details open>
+<summary><strong>日本語</strong>（クリックで開閉）</summary>
+
+Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル・行・列の編集ができます。
+
+### 機能
+
+- CSVファイルを表形式で表示
+- 見出し行を固定してスクロールしやすい
+- **View（閲覧）**: 文字で行を絞り込む（ファイルは変更しない）
+- **Edit（編集）**: セルの変更、行・列の追加・削除。Vault内の同じCSVに保存する
+- **Copy（コピー）**: OSのクリップボードへ（タブ区切り）。Excel、メモ帳、TextEditに貼り付けできる
+- **Paste（貼り付け）**（編集モード）: Excelやテキストエディタからコピーした表を読み、CSVとして保存する
+- 空の行・列はそのまま残る
+- 完全オフライン（通信しない）
+
+### 使い方
+
+1. コミュニティプラグインから **TableCSV** を入れて有効にする
+2. ファイル一覧から `.csv` を開く
+3. 最初は **View**。フィルター欄に文字を入れると行が絞り込まれる
+4. ファイルを直すときは **Edit** に切り替える。フィルターは解除され、表全体を編集する
+5. ツールバーで選択中の行・列を追加・削除する。セルをクリックして選ぶ。Enterは確定のみ（移動しない）
+6. **Copy** で表をクリップボードへ送る。Viewでは見出し＋絞り込み後の行、Editでは表全体
+7. **Edit** で **Paste** すると、クリップボードの表で置き換わる（Excelからのタブ区切り、またはカンマ区切り）。セルにフォーカスしていないときは `Ctrl+V` / `Cmd+V` でも同じ
+
+### ヒント
+
+- とても大きいCSVは表示に時間がかかることがある
+- Viewは書き込まない。EditはVault内の同じ `.csv` に保存する
+- コピーはOSのクリップボードを使う。別の表計算プラグインは不要
+
+### 更新履歴
+
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.2.0** — OSのクリップボードで表をコピー・貼り付け。
+
+### 作者
+
+K-Tech Studio
+
+### サポート
+
+[Buy Me a Coffee](https://buymeacoffee.com/k_tech_studio)
+
+### ライセンス
+
+MIT
+
+</details>
