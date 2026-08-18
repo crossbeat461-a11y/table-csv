@@ -12,7 +12,7 @@ Paste these values in the developer dashboard.
 ## Short description
 
 ```
-Open CSV files as tables. View with a text filter, or edit cells, rows, and columns.
+Open CSV files as tables. View with a text filter, edit cells, and copy or paste via the system clipboard.
 ```
 
 ## Longer description (if available)
@@ -20,7 +20,9 @@ Open CSV files as tables. View with a text filter, or edit cells, rows, and colu
 ```
 TableCSV opens .csv files as tables inside your vault.
 View mode filters rows without changing the file.
-Edit mode updates cells, rows, and columns, then saves. Fully offline — no network requests.
+Edit mode updates cells, rows, and columns, then saves.
+Copy puts the current table on the OS clipboard (tab-separated) so you can paste into Excel, Notepad, or TextEdit on Windows and Mac.
+Paste (Edit mode) reads a table from the clipboard and saves it as CSV. Fully offline — no network requests.
 ```
 
 ## Suggested categories / tags

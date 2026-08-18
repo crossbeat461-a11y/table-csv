@@ -4,7 +4,7 @@ var obsidian = require('obsidian');
 
 var VIEW_TYPE = 'csv';
 
-function parseCsv(text) {
+function parseDelimited(text, delim) {
   var raw = String(text || '').replace(/^\uFEFF/, '');
   if (!raw.length) {
     return [];
@@ -27,7 +27,7 @@ function parseCsv(text) {
       }
     } else if (c === '"') {
       inQuotes = true;
-    } else if (c === ',') {
+    } else if (c === delim) {
       row.push(cell);
       cell = '';
     } else if (c === '\n') {
@@ -46,24 +46,92 @@ function parseCsv(text) {
   return rows;
 }
 
-function needsQuote(s) {
-  return /[",\n\r]/.test(s);
+function parseCsv(text) {
+  return parseDelimited(text, ',');
 }
 
-function serializeCsv(rows) {
+function parseClipboardTable(text) {
+  var raw = String(text || '').replace(/^\uFEFF/, '');
+  if (!raw.length) {
+    return [];
+  }
+  if (raw.indexOf('\t') !== -1) {
+    return parseDelimited(raw, '\t');
+  }
+  return parseCsv(raw);
+}
+
+function needsQuote(s, delim) {
+  var d = delim || ',';
+  return s.indexOf('"') !== -1 || s.indexOf('\n') !== -1 || s.indexOf('\r') !== -1 || s.indexOf(d) !== -1;
+}
+
+function serializeDelimited(rows, delim) {
+  var d = delim || ',';
   return rows
     .map(function (row) {
       return row
         .map(function (cell) {
           var s = String(cell == null ? '' : cell);
-          if (needsQuote(s)) {
+          if (needsQuote(s, d)) {
             return '"' + s.replace(/"/g, '""') + '"';
           }
           return s;
         })
-        .join(',');
+        .join(d);
     })
     .join('\n');
+}
+
+function serializeCsv(rows) {
+  return serializeDelimited(rows, ',');
+}
+
+function serializeTsv(rows) {
+  return serializeDelimited(rows, '\t');
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function rowsToHtmlTable(rows) {
+  return (
+    '<table>' +
+    rows
+      .map(function (row) {
+        return (
+          '<tr>' +
+          row
+            .map(function (cell) {
+              return '<td>' + escapeHtml(cell == null ? '' : cell) + '</td>';
+            })
+            .join('') +
+          '</tr>'
+        );
+      })
+      .join('') +
+    '</table>'
+  );
+}
+
+function fallbackCopyText(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  var ok = document.execCommand('copy');
+  document.body.removeChild(ta);
+  if (!ok) {
+    throw new Error('execCommand copy failed');
+  }
 }
 
 function colCountOf(rows) {
@@ -103,6 +171,26 @@ class TableCsvView extends obsidian.TextFileView {
     this.selCol = 0;
   }
 
+  async onOpen() {
+    await super.onOpen();
+    var self = this;
+    this.registerDomEvent(this.contentEl, 'paste', function (ev) {
+      if (self.mode !== 'edit') {
+        return;
+      }
+      var t = ev.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) {
+        return;
+      }
+      var text = ev.clipboardData ? ev.clipboardData.getData('text/plain') : '';
+      if (!text) {
+        return;
+      }
+      ev.preventDefault();
+      self.applyPastedText(text);
+    });
+  }
+
   getViewType() {
     return VIEW_TYPE;
   }
@@ -136,6 +224,80 @@ class TableCsvView extends obsidian.TextFileView {
   persist() {
     this.data = serializeCsv(this.rows);
     this.requestSave();
+  }
+
+  rowsForCopy() {
+    if (this.mode === 'view') {
+      var header = this.rows.length ? [this.rows[0]] : [];
+      var body = this.visibleBody().map(function (item) {
+        return item.row;
+      });
+      return header.concat(body);
+    }
+    return this.rows;
+  }
+
+  async copyTable() {
+    var rows = this.rowsForCopy();
+    if (!rows.length) {
+      new obsidian.Notice('Nothing to copy');
+      return;
+    }
+    var tsv = serializeTsv(rows);
+    var html = rowsToHtmlTable(rows);
+    try {
+      if (typeof ClipboardItem !== 'undefined' && navigator.clipboard && navigator.clipboard.write) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/plain': new Blob([tsv], { type: 'text/plain' }),
+            'text/html': new Blob([html], { type: 'text/html' }),
+          }),
+        ]);
+      } else if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(tsv);
+      } else {
+        fallbackCopyText(tsv);
+      }
+      new obsidian.Notice('Copied table');
+    } catch (e) {
+      try {
+        fallbackCopyText(tsv);
+        new obsidian.Notice('Copied table');
+      } catch (e2) {
+        new obsidian.Notice('Copy failed');
+      }
+    }
+  }
+
+  async pasteTable() {
+    if (this.mode !== 'edit') {
+      new obsidian.Notice('Switch to Edit to paste');
+      return;
+    }
+    var text = '';
+    try {
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        text = await navigator.clipboard.readText();
+      }
+    } catch (e) {
+      new obsidian.Notice('Could not read clipboard');
+      return;
+    }
+    this.applyPastedText(text);
+  }
+
+  applyPastedText(text) {
+    var rows = parseClipboardTable(text);
+    if (!rows.length) {
+      new obsidian.Notice('Clipboard is empty');
+      return;
+    }
+    this.rows = rows;
+    this.selRow = 0;
+    this.selCol = 0;
+    this.persist();
+    this.render();
+    new obsidian.Notice('Pasted table');
   }
 
   setMode(mode) {
@@ -267,6 +429,11 @@ class TableCsvView extends obsidian.TextFileView {
       self.setMode('edit');
     });
 
+    var copyBtn = toolbar.createEl('button', { text: 'Copy', type: 'button' });
+    copyBtn.addEventListener('click', function () {
+      self.copyTable();
+    });
+
     if (this.mode === 'view') {
       var input = toolbar.createEl('input', {
         type: 'search',
@@ -278,6 +445,10 @@ class TableCsvView extends obsidian.TextFileView {
         self.render();
       });
     } else {
+      var pasteBtn = toolbar.createEl('button', { text: 'Paste', type: 'button' });
+      pasteBtn.addEventListener('click', function () {
+        self.pasteTable();
+      });
       var insertRowBtn = toolbar.createEl('button', { text: 'Insert row', type: 'button' });
       var deleteRowBtn = toolbar.createEl('button', { text: 'Delete row', type: 'button' });
       var insertColBtn = toolbar.createEl('button', { text: 'Insert column', type: 'button' });

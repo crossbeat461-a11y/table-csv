@@ -19,6 +19,8 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 - Sticky header row for easier scrolling
 - **View** mode: text filter to narrow rows (does not change the file)
 - **Edit** mode: change cells, insert/delete rows and columns, then save to the vault
+- **Copy** uses the OS clipboard (tab-separated). Paste into Excel, Notepad, or TextEdit
+- **Paste** (Edit mode) reads a table from the clipboard — from Excel or a text editor — and writes it as CSV
 - Empty rows and columns stay as you left them
 - Works fully offline (no network requests)
 
@@ -29,11 +31,18 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 3. **View** is the default. Type in the filter box to narrow matching rows
 4. Switch to **Edit** to change the file. The filter is cleared so you edit the whole table
 5. Insert or delete the selected row/column with the toolbar. Click a cell to select it. Enter confirms a cell (does not move)
+6. **Copy** puts the table on the system clipboard. In View mode this is the header plus filtered rows; in Edit mode it is the whole table
+7. In **Edit**, **Paste** replaces the table with clipboard data (tab-separated from Excel, or comma-separated). `Ctrl+V` / `Cmd+V` does the same when focus is not inside a cell
 
 ## Tips
 
 - Very large CSV files may take longer to render
-- View mode never writes. Edit mode saves to the same `.csv` file in your vault
+- View mode never writes. Edit mode saves to the same `.csv` file in the vault
+- Copy uses the system clipboard. It does not require a companion spreadsheet plugin
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.2.0** — copy and paste tables through the OS clipboard.
 
 ## Author
 
