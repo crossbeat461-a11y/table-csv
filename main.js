@@ -670,7 +670,10 @@ class TableCsvPlugin extends obsidian.Plugin {
       console.warn('table-csv: registerExtensions', e);
     }
     console.info('table-csv: loaded');
-    await this.maybeShowBmcAfterUpdate();
+    var self = this;
+    this.app.workspace.onLayoutReady(function () {
+      self.maybeShowBmcAfterUpdate();
+    });
   }
 
   async maybeShowBmcAfterUpdate() {
@@ -678,7 +681,12 @@ class TableCsvPlugin extends obsidian.Plugin {
     var data = (await this.loadData()) || {};
     var prev = data.lastSeenVersion;
 
-    if (prev && prev !== current && !data.hideBmcAfterUpdate) {
+    if (prev === current) {
+      return;
+    }
+
+    // prev が無いケースも含める（1.2.1 以前からの更新では lastSeenVersion が無い）
+    if (!data.hideBmcAfterUpdate) {
       var self = this;
       new UpdateBmcModal(this.app, current, function (skipNext) {
         if (skipNext) {
@@ -690,9 +698,7 @@ class TableCsvPlugin extends obsidian.Plugin {
       }).open();
     }
 
-    if (prev !== current) {
-      await this.saveData(Object.assign({}, data, { lastSeenVersion: current }));
-    }
+    await this.saveData(Object.assign({}, data, { lastSeenVersion: current }));
   }
 }
 
