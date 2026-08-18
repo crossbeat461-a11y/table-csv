@@ -56,6 +56,19 @@
   z-index: 1;
 }
 
+.table-csv-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.table-csv-sortable:hover {
+  background: var(--background-modifier-hover);
+}
+
+.table-csv-sortable.is-sorted {
+  color: var(--text-accent);
+}
+
 .table-csv-table tr:nth-child(even) td {
   background: var(--background-primary-alt);
 }

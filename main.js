@@ -152,6 +152,32 @@ function emptyRow(cols) {
   return r;
 }
 
+function cellSortKey(v) {
+  return String(v == null ? '' : v).trim();
+}
+
+function compareCells(a, b) {
+  var sa = cellSortKey(a);
+  var sb = cellSortKey(b);
+  if (!sa && !sb) {
+    return 0;
+  }
+  if (!sa) {
+    return 1;
+  }
+  if (!sb) {
+    return -1;
+  }
+  var na = Number(sa.replace(/,/g, ''));
+  var nb = Number(sb.replace(/,/g, ''));
+  var aNum = sa !== '' && Number.isFinite(na) && /^-?\d+(\.\d+)?$/.test(sa.replace(/,/g, ''));
+  var bNum = sb !== '' && Number.isFinite(nb) && /^-?\d+(\.\d+)?$/.test(sb.replace(/,/g, ''));
+  if (aNum && bNum) {
+    return na - nb;
+  }
+  return sa.localeCompare(sb, undefined, { numeric: true, sensitivity: 'base' });
+}
+
 function ensureCell(rows, r, c) {
   while (rows.length <= r) {
     rows.push([]);
@@ -169,6 +195,8 @@ class TableCsvView extends obsidian.TextFileView {
     this.rows = [];
     this.selRow = 0;
     this.selCol = 0;
+    this.sortCol = null;
+    this.sortDir = null;
   }
 
   async onOpen() {
@@ -211,6 +239,8 @@ class TableCsvView extends obsidian.TextFileView {
       this.mode = 'view';
       this.selRow = 0;
       this.selCol = 0;
+      this.sortCol = null;
+      this.sortDir = null;
     }
     this.render();
   }
@@ -306,6 +336,8 @@ class TableCsvView extends obsidian.TextFileView {
     }
     if (mode === 'edit') {
       this.filter = '';
+      this.sortCol = null;
+      this.sortDir = null;
     } else {
       this.persist();
     }
@@ -392,22 +424,52 @@ class TableCsvView extends obsidian.TextFileView {
     }
     var q = String(this.filter || '').trim().toLowerCase();
     var body = rows.slice(1);
+    var out;
     if (!q) {
-      return body.map(function (r, i) {
+      out = body.map(function (r, i) {
         return { row: r, index: i + 1 };
       });
-    }
-    var out = [];
-    for (var i = 0; i < body.length; i++) {
-      var r = body[i];
-      var hit = r.some(function (v) {
-        return String(v).toLowerCase().includes(q);
-      });
-      if (hit) {
-        out.push({ row: r, index: i + 1 });
+    } else {
+      out = [];
+      for (var i = 0; i < body.length; i++) {
+        var r = body[i];
+        var hit = r.some(function (v) {
+          return String(v).toLowerCase().includes(q);
+        });
+        if (hit) {
+          out.push({ row: r, index: i + 1 });
+        }
       }
     }
-    return out;
+    return this.sortBody(out);
+  }
+
+  sortBody(items) {
+    if (this.sortCol == null || !this.sortDir) {
+      return items;
+    }
+    var col = this.sortCol;
+    var dir = this.sortDir === 'desc' ? -1 : 1;
+    return items.slice().sort(function (a, b) {
+      return compareCells(a.row[col], b.row[col]) * dir;
+    });
+  }
+
+  cycleSort(col) {
+    if (this.sortCol === col) {
+      if (this.sortDir === 'asc') {
+        this.sortDir = 'desc';
+      } else if (this.sortDir === 'desc') {
+        this.sortCol = null;
+        this.sortDir = null;
+      } else {
+        this.sortDir = 'asc';
+      }
+    } else {
+      this.sortCol = col;
+      this.sortDir = 'asc';
+    }
+    this.render();
   }
 
   render() {
@@ -507,7 +569,23 @@ class TableCsvView extends obsidian.TextFileView {
         th.toggleClass('is-selected', this.selRow === 0 && this.selCol === c);
         this.bindCell(th, 0, c, headVal, true);
       } else {
-        hr.createEl('th', { text: headVal });
+        (function (colIndex) {
+          var label = headVal;
+          if (self.sortCol === colIndex) {
+            label += self.sortDir === 'desc' ? ' ▼' : ' ▲';
+          }
+          var thView = hr.createEl('th', {
+            cls: 'table-csv-sortable',
+            text: label,
+            attr: {
+              title: t('クリックで並べ替え', 'Click to sort'),
+            },
+          });
+          thView.toggleClass('is-sorted', self.sortCol === colIndex);
+          thView.addEventListener('click', function () {
+            self.cycleSort(colIndex);
+          });
+        })(c);
       }
     }
 
