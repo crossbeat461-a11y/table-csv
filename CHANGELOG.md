@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.4.2
+
+- Keep IME composition in the filter box (Japanese, Chinese, Korean, and other input methods)
+- Filter and column sort normalize Unicode so composed characters match
+- Column sort uses the OS language, with Japanese / Chinese / Korean fallbacks
+
+### 日本語
+
+- フィルター入力中の IME 変換を維持（日本語・中国語・韓国語など）
+- フィルターと列の並べ替えで Unicode 正規化を行い、合成文字でも一致するように
+- 列の並べ替えは OS の言語を使い、日本語・中国語・韓国語もフォールバック
+
 ## 1.4.1
 
 - Fix gap above the sticky column header when scrolling long tables

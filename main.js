@@ -156,6 +156,33 @@ function cellSortKey(v) {
   return String(v == null ? '' : v).trim();
 }
 
+function normalizeFilterText(s) {
+  var t = String(s == null ? '' : s);
+  try {
+    t = t.normalize('NFC');
+  } catch (e) {
+    /* ignore */
+  }
+  return t.trim().toLowerCase();
+}
+
+function sortLocales() {
+  var list = [];
+  try {
+    if (typeof navigator !== 'undefined' && navigator.languages && navigator.languages.length) {
+      for (var i = 0; i < navigator.languages.length; i++) {
+        list.push(navigator.languages[i]);
+      }
+    } else if (typeof navigator !== 'undefined' && navigator.language) {
+      list.push(navigator.language);
+    }
+  } catch (e) {
+    /* ignore */
+  }
+  list.push('ja', 'zh-Hans', 'zh-Hant', 'ko', 'en');
+  return list;
+}
+
 function compareCells(a, b) {
   var sa = cellSortKey(a);
   var sb = cellSortKey(b);
@@ -175,7 +202,13 @@ function compareCells(a, b) {
   if (aNum && bNum) {
     return na - nb;
   }
-  return sa.localeCompare(sb, undefined, { numeric: true, sensitivity: 'base' });
+  try {
+    sa = sa.normalize('NFC');
+    sb = sb.normalize('NFC');
+  } catch (e) {
+    /* ignore */
+  }
+  return sa.localeCompare(sb, sortLocales(), { numeric: true, sensitivity: 'base' });
 }
 
 function ensureCell(rows, r, c) {
@@ -198,6 +231,9 @@ class TableCsvView extends obsidian.TextFileView {
     this.sortCol = null;
     this.sortDir = null;
     this.pinLastRow = false;
+    this.filterComposing = false;
+    this.keepFilterFocus = false;
+    this.filterCaret = null;
   }
 
   async onOpen() {
@@ -423,7 +459,7 @@ class TableCsvView extends obsidian.TextFileView {
     if (!rows.length) {
       return [];
     }
-    var q = String(this.filter || '').trim().toLowerCase();
+    var q = normalizeFilterText(this.filter);
     var body = rows.slice(1);
     var out;
     if (!q) {
@@ -435,7 +471,7 @@ class TableCsvView extends obsidian.TextFileView {
       for (var i = 0; i < body.length; i++) {
         var r = body[i];
         var hit = r.some(function (v) {
-          return String(v).toLowerCase().includes(q);
+          return normalizeFilterText(v).includes(q);
         });
         if (hit) {
           out.push({ row: r, index: i + 1 });
@@ -487,6 +523,13 @@ class TableCsvView extends obsidian.TextFileView {
       this.sortCol = col;
       this.sortDir = 'asc';
     }
+    this.render();
+  }
+
+  applyFilterInput(input) {
+    this.filter = input.value || '';
+    this.filterCaret = input.selectionStart;
+    this.keepFilterFocus = true;
     this.render();
   }
 
@@ -545,13 +588,41 @@ class TableCsvView extends obsidian.TextFileView {
 
       var input = toolbar.createEl('input', {
         type: 'search',
-        attr: { placeholder: 'Filter' },
+        attr: {
+          placeholder: 'Filter',
+          spellcheck: 'false',
+          autocomplete: 'off',
+        },
       });
       input.value = this.filter || '';
-      input.addEventListener('input', function () {
-        self.filter = input.value || '';
-        self.render();
+      input.addEventListener('compositionstart', function () {
+        self.filterComposing = true;
       });
+      input.addEventListener('compositionend', function () {
+        self.filterComposing = false;
+        self.applyFilterInput(input);
+      });
+      input.addEventListener('input', function (ev) {
+        self.filter = input.value || '';
+        if (ev.isComposing || self.filterComposing) {
+          return;
+        }
+        self.applyFilterInput(input);
+      });
+      if (this.keepFilterFocus) {
+        this.keepFilterFocus = false;
+        input.focus();
+        var pos = this.filterCaret;
+        if (typeof pos === 'number') {
+          try {
+            var len = input.value.length;
+            var caret = Math.max(0, Math.min(len, pos));
+            input.setSelectionRange(caret, caret);
+          } catch (e) {
+            /* ignore */
+          }
+        }
+      }
     } else {
       var pasteBtn = toolbar.createEl('button', { text: 'Paste', type: 'button' });
       pasteBtn.addEventListener('click', function () {
