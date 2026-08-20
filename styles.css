@@ -12,9 +12,27 @@
   flex-wrap: wrap;
 }
 
+.table-csv-pin-last {
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+.table-csv-pin-last label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
 .table-csv-toolbar input[type="search"] {
   flex: 1;
   min-width: 160px;
+}
+
+.table-csv-table tr.is-pinned td {
+  background: var(--background-secondary);
+  font-weight: 600;
 }
 
 .table-csv-bmc-btn {
