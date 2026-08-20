@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.0
+
+- View mode: optional **Pin last row** checkbox keeps the bottom row (e.g. totals) out of column sort and always at the table foot
+- Pinned last row uses a subtle highlight while the option is on
+
+### 日本語
+
+- 閲覧モードに **最下行を固定** チェックを追加。最後の1行（合計行など）を並べ替え対象外にし、常に表の下に表示
+- 固定中の最下行は薄く強調表示
+
 ## 1.3.0
 
 - View mode: click a column header to sort (asc → desc → clear). Filter and sort do not change the file

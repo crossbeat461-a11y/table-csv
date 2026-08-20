@@ -197,6 +197,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.selCol = 0;
     this.sortCol = null;
     this.sortDir = null;
+    this.pinLastRow = false;
   }
 
   async onOpen() {
@@ -441,6 +442,23 @@ class TableCsvView extends obsidian.TextFileView {
         }
       }
     }
+    if (this.pinLastRow && rows.length > 1) {
+      var lastIndex = rows.length - 1;
+      var sortable = [];
+      var pinned = null;
+      for (var j = 0; j < out.length; j++) {
+        if (out[j].index === lastIndex) {
+          pinned = out[j];
+        } else {
+          sortable.push(out[j]);
+        }
+      }
+      out = this.sortBody(sortable);
+      if (pinned) {
+        out = out.concat([pinned]);
+      }
+      return out;
+    }
     return this.sortBody(out);
   }
 
@@ -506,6 +524,25 @@ class TableCsvView extends obsidian.TextFileView {
     });
 
     if (this.mode === 'view') {
+      var pinWrap = toolbar.createDiv({ cls: 'table-csv-pin-last' });
+      var pinLabel = pinWrap.createEl('label');
+      var pinCheck = pinLabel.createEl('input', { type: 'checkbox' });
+      pinCheck.checked = this.pinLastRow;
+      pinLabel.createSpan({
+        text: t('最下行を固定', 'Pin last row'),
+      });
+      pinCheck.setAttribute(
+        'title',
+        t(
+          '合計行など最後の1行を並べ替え対象外にし、常に表の下に表示します',
+          'Keep the last row (e.g. totals) out of sort and always at the bottom',
+        ),
+      );
+      pinCheck.addEventListener('change', function () {
+        self.pinLastRow = pinCheck.checked;
+        self.render();
+      });
+
       var input = toolbar.createEl('input', {
         type: 'search',
         attr: { placeholder: 'Filter' },
@@ -595,8 +632,11 @@ class TableCsvView extends obsidian.TextFileView {
         this.renderEditRow(tbody, r, cols);
       }
     } else {
+      var lastPinnedIndex =
+        self.pinLastRow && rows.length > 1 ? rows.length - 1 : null;
       body.forEach(function (item) {
         var tr = tbody.createEl('tr');
+        tr.toggleClass('is-pinned', lastPinnedIndex != null && item.index === lastPinnedIndex);
         for (var i = 0; i < cols; i++) {
           var val = String(item.row[i] == null ? '' : item.row[i]);
           tr.createEl('td', { text: val, attr: { title: val } });

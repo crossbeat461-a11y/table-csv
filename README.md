@@ -27,6 +27,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 - Sticky header row for easier scrolling
 - **View** mode: text filter to narrow rows (does not change the file)
 - **View** mode: click a column header to sort (asc → desc → clear; does not change the file)
+- **View** mode: optional **Pin last row** for CSVs with a totals row at the bottom (keeps that row out of sort)
 - **Edit** mode: change cells, insert/delete rows and columns, then save to the vault
 - **Copy** uses the OS clipboard (tab-separated). Paste into Excel, Notepad, or TextEdit
 - **Paste** (Edit mode) reads a table from the clipboard — from Excel or a text editor — and writes it as CSV
@@ -37,7 +38,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 1. Install **TableCSV** from Community plugins and enable it
 2. Open a `.csv` file from the file explorer
-3. **View** is the default. Type in the filter box to narrow matching rows. Click a column header to sort
+3. **View** is the default. Type in the filter box to narrow matching rows. Click a column header to sort. Check **Pin last row** when the bottom row is a total you do not want moved
 4. Switch to **Edit** to change the file. The filter and sort are cleared so you edit the whole table
 5. Insert or delete the selected row/column with the toolbar. Click a cell to select it. Enter confirms a cell (does not move)
 6. **Copy** puts the table on the system clipboard. In View mode this is the header plus filtered rows; in Edit mode it is the whole table
@@ -51,7 +52,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.3.0** — click column headers to sort in View mode.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.4.0** — pin the last row (e.g. totals) while sorting in View mode.
 
 ### Author
 
@@ -84,6 +85,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 - 見出し行を固定してスクロールしやすい
 - **View（閲覧）**: 文字で行を絞り込む（ファイルは変更しない）
 - **View（閲覧）**: 列見出しをクリックして並べ替え（昇順 → 降順 → 解除。ファイルは変更しない）
+- **View（閲覧）**: **最下行を固定** — 合計行など最後の1行を並べ替え対象外にできる
 - **Edit（編集）**: セルの変更、行・列の追加・削除。Vault内の同じCSVに保存する
 - **Copy（コピー）**: OSのクリップボードへ（タブ区切り）。Excel、メモ帳、TextEditに貼り付けできる
 - **Paste（貼り付け）**（編集モード）: Excelやテキストエディタからコピーした表を読み、CSVとして保存する
@@ -94,7 +96,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 1. コミュニティプラグインから **TableCSV** を入れて有効にする
 2. ファイル一覧から `.csv` を開く
-3. 最初は **View**。フィルター欄に文字を入れると行が絞り込まれる。列見出しをクリックすると並べ替え
+3. 最初は **View**。フィルター欄に文字を入れると行が絞り込まれる。列見出しをクリックすると並べ替え。**最下行を固定** にチェックすると、合計行など最後の1行は並べ替えされず下に残る
 4. ファイルを直すときは **Edit** に切り替える。フィルターとソートは解除され、表全体を編集する
 5. ツールバーで選択中の行・列を追加・削除する。セルをクリックして選ぶ。Enterは確定のみ（移動しない）
 6. **Copy** で表をクリップボードへ送る。Viewでは見出し＋絞り込み後の行、Editでは表全体
@@ -108,7 +110,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.3.0** — 閲覧モードで列見出しクリック並べ替え。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.4.0** — 閲覧モードで最下行を固定しながら列ソート（合計行対応）。
 
 ### 作者
 
