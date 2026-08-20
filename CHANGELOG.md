@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.1
+
+- Fix gap above the sticky column header when scrolling long tables
+- Toolbar and file info stay fixed; only the table body scrolls
+
+### 日本語
+
+- 長い表をスクロールしたとき、列見出しの上に隙間が出る表示を修正
+- ツールバーとファイル情報は固定のまま、表部分のみスクロール
+
 ## 1.4.0
 
 - View mode: optional **Pin last row** checkbox keeps the bottom row (e.g. totals) out of column sort and always at the table foot

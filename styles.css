@@ -1,7 +1,10 @@
 .table-csv-view {
   padding: 8px 12px;
-  overflow: auto;
+  overflow: hidden;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 .table-csv-toolbar {
@@ -10,6 +13,7 @@
   align-items: center;
   margin-bottom: 8px;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .table-csv-pin-last {
@@ -47,6 +51,13 @@
   opacity: 0.7;
   font-size: 0.85em;
   margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.table-csv-scroll {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .table-csv-table {
@@ -72,6 +83,7 @@
   top: 0;
   background: var(--background-secondary);
   z-index: 1;
+  box-shadow: 0 1px 0 var(--background-modifier-border);
 }
 
 .table-csv-sortable {
