@@ -592,7 +592,8 @@ class TableCsvView extends obsidian.TextFileView {
       return;
     }
 
-    var table = el.createEl('table', { cls: 'table-csv-table' });
+    var scroll = el.createDiv({ cls: 'table-csv-scroll' });
+    var table = scroll.createEl('table', { cls: 'table-csv-table' });
     var thead = table.createEl('thead');
     var hr = thead.createEl('tr');
     if (this.mode === 'edit') {
