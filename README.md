@@ -9,7 +9,7 @@
 ![Obsidian](https://img.shields.io/badge/Obsidian-1.5.0%2B-483699?style=for-the-badge&logo=obsidian&logoColor=white)
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/k_tech_studio)
 
-**[English](#readme-en)** · **[日本語](#readme-ja)**
+**[English](#readme-en)** · **[日本語](#readme-ja)** · **[Deutsch](#readme-de)**
 
 ![TableCSV screenshot](./images/screenshot.png)
 
@@ -32,6 +32,8 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 - **Copy** uses the OS clipboard (tab-separated). Paste into Excel, Notepad, or TextEdit
 - **Paste** (Edit mode) reads a table from the clipboard — from Excel or a text editor — and writes it as CSV
 - Empty rows and columns stay as you left them
+- Saving keeps the file's delimiter, quoting style, line endings, and UTF-8 BOM
+- UI follows the Obsidian language (Japanese, English, or German)
 - Works fully offline (no network requests)
 
 ### How to use
@@ -52,7 +54,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.4.3** — keep original line endings when saving; Edit with no cell changes does not rewrite the file.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.4.4** — keep delimiter and quoting style; UI in Japanese, English, and German.
 
 ### Author
 
@@ -90,6 +92,8 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 - **Copy（コピー）**: OSのクリップボードへ（タブ区切り）。Excel、メモ帳、TextEditに貼り付けできる
 - **Paste（貼り付け）**（編集モード）: Excelやテキストエディタからコピーした表を読み、CSVとして保存する
 - 空の行・列はそのまま残る
+- 保存時に区切り文字・引用符の付け方・改行・UTF-8 BOM を維持
+- UI は Obsidian の言語設定に従う（日本語・英語・ドイツ語）
 - 完全オフライン（通信しない）
 
 ### 使い方
@@ -110,7 +114,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.4.3** — 保存時に元の改行を維持。セルを変えずに Edit を出てもファイルを書き直さない。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.4.4** — 区切り文字と引用スタイルを維持。UI は日本語・英語・ドイツ語。
 
 ### 作者
 
@@ -129,3 +133,36 @@ K-Tech Studio
 MIT
 
 </details>
+
+---
+
+<a id="readme-de"></a>
+
+<details>
+<summary><strong>Deutsch</strong> (aufklappen)</summary>
+
+Öffnet `.csv`-Dateien als Tabellen im Vault. Anzeigen und filtern, oder Zellen, Zeilen und Spalten bearbeiten.
+
+Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
+
+### Funktionen
+
+- CSV-Dateien als Tabelle anzeigen
+- Kopfzeile bleibt beim Scrollen sichtbar
+- **Ansicht**: Zeilen filtern und Spalten sortieren (Datei bleibt unverändert)
+- **Ansicht**: optional **Letzte Zeile anheften** für Summenzeilen
+- **Bearbeiten**: Zellen, Zeilen und Spalten ändern und in die gleiche Datei speichern
+- Speichern behält Trennzeichen, Anführungszeichen-Stil, Zeilenenden und UTF-8-BOM
+- **Kopieren** / **Einfügen** über die Systemzwischenablage
+- Vollständig offline
+
+### Versionshinweise
+
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.4.4**.
+
+### Lizenz
+
+MIT
+
+</details>
+
