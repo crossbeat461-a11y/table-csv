@@ -4,15 +4,79 @@ var obsidian = require('obsidian');
 
 var VIEW_TYPE = 'csv';
 
+function needsQuote(s, delim) {
+  var d = delim || ',';
+  if (s.indexOf('"') !== -1 || s.indexOf('\n') !== -1 || s.indexOf('\r') !== -1 || s.indexOf(d) !== -1) {
+    return true;
+  }
+  // Excel in DE/EU uses ';' and still quotes fields that contain ','
+  if (d === ';' && s.indexOf(',') !== -1) {
+    return true;
+  }
+  return false;
+}
+
+function detectDelimiter(text) {
+  var raw = String(text || '').replace(/^\uFEFF/, '');
+  var counts = { ',': 0, ';': 0, '\t': 0 };
+  var inQuotes = false;
+  var lines = 0;
+  for (var i = 0; i < raw.length && lines < 20; i++) {
+    var c = raw[i];
+    var n = raw[i + 1];
+    if (inQuotes) {
+      if (c === '"' && n === '"') {
+        i++;
+      } else if (c === '"') {
+        inQuotes = false;
+      }
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ',' || c === ';' || c === '\t') {
+      counts[c]++;
+    } else if (c === '\n' || (c === '\r' && n !== '\n')) {
+      lines++;
+    }
+  }
+  var best = ',';
+  var bestN = counts[','];
+  if (counts[';'] > bestN) {
+    best = ';';
+    bestN = counts[';'];
+  }
+  if (counts['\t'] > bestN) {
+    best = '\t';
+  }
+  return best;
+}
+
 function parseDelimited(text, delim) {
+  var d = delim || ',';
   var raw = String(text || '').replace(/^\uFEFF/, '');
   if (!raw.length) {
-    return [];
+    return { rows: [], quoteAll: false };
   }
   var rows = [];
   var row = [];
   var cell = '';
   var inQuotes = false;
+  var cellQuoted = false;
+  var quoteAllVotes = 0;
+  var quoteMinVotes = 0;
+
+  function finishCell() {
+    if (cellQuoted) {
+      if (!needsQuote(cell, d)) {
+        quoteAllVotes++;
+      }
+    } else {
+      quoteMinVotes++;
+    }
+    row.push(cell);
+    cell = '';
+    cellQuoted = false;
+  }
+
   for (var i = 0; i < raw.length; i++) {
     var c = raw[i];
     var n = raw[i + 1];
@@ -27,27 +91,26 @@ function parseDelimited(text, delim) {
       }
     } else if (c === '"') {
       inQuotes = true;
-    } else if (c === delim) {
-      row.push(cell);
-      cell = '';
+      cellQuoted = true;
+    } else if (c === d) {
+      finishCell();
     } else if (c === '\n' || (c === '\r' && n !== '\n')) {
-      row.push(cell);
+      finishCell();
       rows.push(row);
       row = [];
-      cell = '';
     } else if (c !== '\r') {
       cell += c;
     }
   }
-  if (cell.length || row.length || rows.length === 0) {
-    row.push(cell);
+  if (cell.length || row.length || rows.length === 0 || cellQuoted) {
+    finishCell();
     rows.push(row);
   }
-  return rows;
+  return { rows: rows, quoteAll: quoteAllVotes > quoteMinVotes };
 }
 
-function parseCsv(text) {
-  return parseDelimited(text, ',');
+function parseCsv(text, delim) {
+  return parseDelimited(text, delim || ',');
 }
 
 function parseClipboardTable(text) {
@@ -56,14 +119,9 @@ function parseClipboardTable(text) {
     return [];
   }
   if (raw.indexOf('\t') !== -1) {
-    return parseDelimited(raw, '\t');
+    return parseDelimited(raw, '\t').rows;
   }
-  return parseCsv(raw);
-}
-
-function needsQuote(s, delim) {
-  var d = delim || ',';
-  return s.indexOf('"') !== -1 || s.indexOf('\n') !== -1 || s.indexOf('\r') !== -1 || s.indexOf(d) !== -1;
+  return parseDelimited(raw, detectDelimiter(raw)).rows;
 }
 
 function detectNewline(text) {
@@ -86,7 +144,7 @@ function hasBom(text) {
   return String(text || '').charAt(0) === '\uFEFF';
 }
 
-function serializeDelimited(rows, delim, newline) {
+function serializeDelimited(rows, delim, newline, quoteAll) {
   var d = delim || ',';
   var nl = newline || '\n';
   return rows
@@ -94,7 +152,7 @@ function serializeDelimited(rows, delim, newline) {
       return row
         .map(function (cell) {
           var s = String(cell == null ? '' : cell);
-          if (needsQuote(s, d)) {
+          if (quoteAll || needsQuote(s, d)) {
             return '"' + s.replace(/"/g, '""') + '"';
           }
           return s;
@@ -105,13 +163,14 @@ function serializeDelimited(rows, delim, newline) {
 }
 
 function serializeCsv(rows, newline) {
-  return serializeDelimited(rows, ',', newline);
+  return serializeDelimited(rows, ',', newline, false);
 }
 
 function formatCsvFile(rows, opts) {
   opts = opts || {};
   var nl = opts.newline || '\n';
-  var out = serializeDelimited(rows, ',', nl);
+  var delim = opts.delim || ',';
+  var out = serializeDelimited(rows, delim, nl, !!opts.quoteAll);
   if (opts.trailingNewline && rows.length) {
     out += nl;
   }
@@ -213,8 +272,47 @@ function sortLocales() {
   } catch (e) {
     /* ignore */
   }
-  list.push('ja', 'zh-Hans', 'zh-Hant', 'ko', 'en');
+  list.push('ja', 'de', 'zh-Hans', 'zh-Hant', 'ko', 'en');
   return list;
+}
+
+function isGermanNumeric() {
+  try {
+    if (uiLang() === 'de') {
+      return true;
+    }
+  } catch (e) {
+    /* ignore */
+  }
+  var list = sortLocales();
+  for (var i = 0; i < list.length; i++) {
+    if (String(list[i]).toLowerCase().startsWith('de')) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function parseSortNumber(s) {
+  var raw = String(s == null ? '' : s).trim();
+  if (!raw) {
+    return { ok: false, n: NaN };
+  }
+  var t = raw;
+  if (isGermanNumeric()) {
+    if (t.indexOf(',') !== -1) {
+      t = t.replace(/\./g, '').replace(',', '.');
+    } else if (/^-?\d{1,3}(\.\d{3})+$/.test(t)) {
+      t = t.replace(/\./g, '');
+    }
+  } else {
+    t = t.replace(/,/g, '');
+  }
+  var n = Number(t);
+  return {
+    ok: t !== '' && Number.isFinite(n) && /^-?\d+(\.\d+)?$/.test(t),
+    n: n,
+  };
 }
 
 function compareCells(a, b) {
@@ -229,12 +327,10 @@ function compareCells(a, b) {
   if (!sb) {
     return -1;
   }
-  var na = Number(sa.replace(/,/g, ''));
-  var nb = Number(sb.replace(/,/g, ''));
-  var aNum = sa !== '' && Number.isFinite(na) && /^-?\d+(\.\d+)?$/.test(sa.replace(/,/g, ''));
-  var bNum = sb !== '' && Number.isFinite(nb) && /^-?\d+(\.\d+)?$/.test(sb.replace(/,/g, ''));
-  if (aNum && bNum) {
-    return na - nb;
+  var na = parseSortNumber(sa);
+  var nb = parseSortNumber(sb);
+  if (na.ok && nb.ok) {
+    return na.n - nb.n;
   }
   try {
     sa = sa.normalize('NFC');
@@ -271,6 +367,8 @@ class TableCsvView extends obsidian.TextFileView {
     this.newline = '\n';
     this.trailingNewline = false;
     this.bom = false;
+    this.delim = ',';
+    this.quoteAll = false;
   }
 
   async onOpen() {
@@ -306,11 +404,17 @@ class TableCsvView extends obsidian.TextFileView {
       newline: this.newline,
       trailingNewline: this.trailingNewline,
       bom: this.bom,
+      delim: this.delim,
+      quoteAll: this.quoteAll,
     });
   }
 
   getViewData() {
-    return this.formatCurrent();
+    var next = this.formatCurrent();
+    if (next === this.data) {
+      return this.data;
+    }
+    return next;
   }
 
   setViewData(data, clear) {
@@ -318,7 +422,10 @@ class TableCsvView extends obsidian.TextFileView {
     this.newline = detectNewline(data);
     this.trailingNewline = hasTrailingNewline(data);
     this.bom = hasBom(data);
-    this.rows = parseCsv(data);
+    this.delim = detectDelimiter(data);
+    var parsed = parseCsv(data, this.delim);
+    this.rows = parsed.rows;
+    this.quoteAll = parsed.quoteAll;
     if (clear) {
       this.filter = '';
       this.mode = 'view';
@@ -336,6 +443,8 @@ class TableCsvView extends obsidian.TextFileView {
     this.newline = '\n';
     this.trailingNewline = false;
     this.bom = false;
+    this.delim = ',';
+    this.quoteAll = false;
     this.contentEl.empty();
   }
 
@@ -362,7 +471,7 @@ class TableCsvView extends obsidian.TextFileView {
   async copyTable() {
     var rows = this.rowsForCopy();
     if (!rows.length) {
-      new obsidian.Notice('Nothing to copy');
+      new obsidian.Notice(t('コピーするものがありません', 'Nothing to copy', 'Nichts zu kopieren'));
       return;
     }
     var tsv = serializeTsv(rows);
@@ -380,20 +489,20 @@ class TableCsvView extends obsidian.TextFileView {
       } else {
         fallbackCopyText(tsv);
       }
-      new obsidian.Notice('Copied table');
+      new obsidian.Notice(t('表をコピーしました', 'Copied table', 'Tabelle kopiert'));
     } catch (e) {
       try {
         fallbackCopyText(tsv);
-        new obsidian.Notice('Copied table');
+        new obsidian.Notice(t('表をコピーしました', 'Copied table', 'Tabelle kopiert'));
       } catch (e2) {
-        new obsidian.Notice('Copy failed');
+        new obsidian.Notice(t('コピーに失敗しました', 'Copy failed', 'Kopieren fehlgeschlagen'));
       }
     }
   }
 
   async pasteTable() {
     if (this.mode !== 'edit') {
-      new obsidian.Notice('Switch to Edit to paste');
+      new obsidian.Notice(t('貼り付けるには編集モードに切り替えてください', 'Switch to Edit to paste', 'Zum Einfügen in den Bearbeiten-Modus wechseln'));
       return;
     }
     var text = '';
@@ -402,7 +511,7 @@ class TableCsvView extends obsidian.TextFileView {
         text = await navigator.clipboard.readText();
       }
     } catch (e) {
-      new obsidian.Notice('Could not read clipboard');
+      new obsidian.Notice(t('クリップボードを読めませんでした', 'Could not read clipboard', 'Zwischenablage konnte nicht gelesen werden'));
       return;
     }
     this.applyPastedText(text);
@@ -411,7 +520,7 @@ class TableCsvView extends obsidian.TextFileView {
   applyPastedText(text) {
     var rows = parseClipboardTable(text);
     if (!rows.length) {
-      new obsidian.Notice('Clipboard is empty');
+      new obsidian.Notice(t('クリップボードが空です', 'Clipboard is empty', 'Zwischenablage ist leer'));
       return;
     }
     this.rows = rows;
@@ -419,7 +528,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.selCol = 0;
     this.persist();
     this.render();
-    new obsidian.Notice('Pasted table');
+    new obsidian.Notice(t('表を貼り付けました', 'Pasted table', 'Tabelle eingefügt'));
   }
 
   setMode(mode) {
@@ -596,8 +705,8 @@ class TableCsvView extends obsidian.TextFileView {
     el.toggleClass('is-edit', this.mode === 'edit');
 
     var toolbar = el.createDiv({ cls: 'table-csv-toolbar' });
-    var viewBtn = toolbar.createEl('button', { text: 'View', type: 'button' });
-    var editBtn = toolbar.createEl('button', { text: 'Edit', type: 'button' });
+    var viewBtn = toolbar.createEl('button', { text: t('閲覧', 'View', 'Ansicht'), type: 'button' });
+    var editBtn = toolbar.createEl('button', { text: t('編集', 'Edit', 'Bearbeiten'), type: 'button' });
     viewBtn.toggleClass('mod-cta', this.mode === 'view');
     editBtn.toggleClass('mod-cta', this.mode === 'edit');
     viewBtn.addEventListener('click', function () {
@@ -607,14 +716,14 @@ class TableCsvView extends obsidian.TextFileView {
       self.setMode('edit');
     });
 
-    var copyBtn = toolbar.createEl('button', { text: 'Copy', type: 'button' });
+    var copyBtn = toolbar.createEl('button', { text: t('コピー', 'Copy', 'Kopieren'), type: 'button' });
     copyBtn.addEventListener('click', function () {
       self.copyTable();
     });
 
     var bmcBtn = toolbar.createEl('button', {
       cls: 'table-csv-bmc-btn',
-      text: t('☕ Buy Me a Coffee', '☕ Buy Me a Coffee'),
+      text: t('☕ Buy Me a Coffee', '☕ Buy Me a Coffee', '☕ Buy Me a Coffee'),
       type: 'button',
     });
     bmcBtn.addEventListener('click', function () {
@@ -627,13 +736,14 @@ class TableCsvView extends obsidian.TextFileView {
       var pinCheck = pinLabel.createEl('input', { type: 'checkbox' });
       pinCheck.checked = this.pinLastRow;
       pinLabel.createSpan({
-        text: t('最下行を固定', 'Pin last row'),
+        text: t('最下行を固定', 'Pin last row', 'Letzte Zeile anheften'),
       });
       pinCheck.setAttribute(
         'title',
         t(
           '合計行など最後の1行を並べ替え対象外にし、常に表の下に表示します',
           'Keep the last row (e.g. totals) out of sort and always at the bottom',
+          'Die letzte Zeile (z. B. Summen) nicht sortieren und immer unten anzeigen',
         ),
       );
       pinCheck.addEventListener('change', function () {
@@ -644,7 +754,7 @@ class TableCsvView extends obsidian.TextFileView {
       var input = toolbar.createEl('input', {
         type: 'search',
         attr: {
-          placeholder: 'Filter',
+          placeholder: t('絞り込み', 'Filter', 'Filter'),
           spellcheck: 'false',
           autocomplete: 'off',
         },
@@ -679,14 +789,14 @@ class TableCsvView extends obsidian.TextFileView {
         }
       }
     } else {
-      var pasteBtn = toolbar.createEl('button', { text: 'Paste', type: 'button' });
+      var pasteBtn = toolbar.createEl('button', { text: t('貼り付け', 'Paste', 'Einfügen'), type: 'button' });
       pasteBtn.addEventListener('click', function () {
         self.pasteTable();
       });
-      var insertRowBtn = toolbar.createEl('button', { text: 'Insert row', type: 'button' });
-      var deleteRowBtn = toolbar.createEl('button', { text: 'Delete row', type: 'button' });
-      var insertColBtn = toolbar.createEl('button', { text: 'Insert column', type: 'button' });
-      var deleteColBtn = toolbar.createEl('button', { text: 'Delete column', type: 'button' });
+      var insertRowBtn = toolbar.createEl('button', { text: t('行を追加', 'Insert row', 'Zeile einfügen'), type: 'button' });
+      var deleteRowBtn = toolbar.createEl('button', { text: t('行を削除', 'Delete row', 'Zeile löschen'), type: 'button' });
+      var insertColBtn = toolbar.createEl('button', { text: t('列を追加', 'Insert column', 'Spalte einfügen'), type: 'button' });
+      var deleteColBtn = toolbar.createEl('button', { text: t('列を削除', 'Delete column', 'Spalte löschen'), type: 'button' });
       insertRowBtn.addEventListener('click', function () {
         self.insertRow();
       });
@@ -706,15 +816,23 @@ class TableCsvView extends obsidian.TextFileView {
     var body = this.mode === 'view' ? this.visibleBody() : [];
     var total = Math.max(0, rows.length - 1);
     var shown = this.mode === 'view' ? body.length : total;
-    var path = this.file ? this.file.path : '(unsaved)';
-    var modeLabel = this.mode === 'edit' ? 'edit' : 'view';
+    var path = this.file ? this.file.path : t('(未保存)', '(unsaved)', '(ungespeichert)');
+    var modeLabel =
+      this.mode === 'edit'
+        ? t('編集', 'edit', 'Bearbeiten')
+        : t('閲覧', 'view', 'Ansicht');
     el.createDiv({
       cls: 'table-csv-meta',
       text: path + ' — ' + modeLabel + ' — ' + shown + ' / ' + total,
     });
 
     if (!rows.length) {
-      el.createEl('p', { text: this.mode === 'edit' ? 'Empty CSV. Insert a row to start.' : 'Empty CSV' });
+      el.createEl('p', {
+        text:
+          this.mode === 'edit'
+            ? t('空のCSVです。行を追加して始めてください。', 'Empty CSV. Insert a row to start.', 'Leere CSV. Zum Starten eine Zeile einfügen.')
+            : t('空のCSV', 'Empty CSV', 'Leere CSV'),
+      });
       return;
     }
 
@@ -742,7 +860,7 @@ class TableCsvView extends obsidian.TextFileView {
             cls: 'table-csv-sortable',
             text: label,
             attr: {
-              title: t('クリックで並べ替え', 'Click to sort'),
+              title: t('クリックで並べ替え', 'Click to sort', 'Zum Sortieren klicken'),
             },
           });
           thView.toggleClass('is-sorted', self.sortCol === colIndex);
@@ -826,18 +944,30 @@ class TableCsvView extends obsidian.TextFileView {
 
 var BMC_URL = 'https://buymeacoffee.com/k_tech_studio';
 
-function isJapaneseLocale() {
+function uiLang() {
   try {
-    return String((window.localStorage && window.localStorage.getItem('language')) || '')
-      .toLowerCase()
-      .startsWith('ja');
+    var lang = String((window.localStorage && window.localStorage.getItem('language')) || '').toLowerCase();
+    if (lang.startsWith('ja')) {
+      return 'ja';
+    }
+    if (lang.startsWith('de')) {
+      return 'de';
+    }
   } catch (e) {
-    return false;
+    /* ignore */
   }
+  return 'en';
 }
 
-function t(ja, en) {
-  return isJapaneseLocale() ? ja : en;
+function t(ja, en, de) {
+  var lang = uiLang();
+  if (lang === 'ja') {
+    return ja;
+  }
+  if (lang === 'de') {
+    return de || en;
+  }
+  return en;
 }
 
 class UpdateBmcModal extends obsidian.Modal {
@@ -854,19 +984,20 @@ class UpdateBmcModal extends obsidian.Modal {
     content.addClass('table-csv-bmc-modal');
 
     content.createEl('h2', {
-      text: t('TableCSV を更新しました', 'TableCSV updated'),
+      text: t('TableCSV を更新しました', 'TableCSV updated', 'TableCSV aktualisiert'),
     });
     content.createEl('p', {
       text: t(
         'v' + this.version + ' へ更新されました。役に立ったら、開発の励みにしてください（任意）。',
         'Updated to v' + this.version + '. If this plugin helps, consider a coffee (optional).',
+        'Aktualisiert auf v' + this.version + '. Wenn dieses Plugin hilfreich ist, spendieren Sie gern einen Kaffee (optional).',
       ),
     });
 
     var actions = content.createDiv({ cls: 'table-csv-bmc-actions' });
     var coffeeBtn = actions.createEl('button', {
       cls: 'mod-cta',
-      text: t('☕ Buy Me a Coffee', '☕ Buy Me a Coffee'),
+      text: t('☕ Buy Me a Coffee', '☕ Buy Me a Coffee', '☕ Buy Me a Coffee'),
       type: 'button',
     });
     coffeeBtn.addEventListener('click', function () {
@@ -874,7 +1005,7 @@ class UpdateBmcModal extends obsidian.Modal {
     });
 
     var closeBtn = actions.createEl('button', {
-      text: t('閉じる', 'Close'),
+      text: t('閉じる', 'Close', 'Schließen'),
       type: 'button',
     });
     closeBtn.addEventListener('click', function () {
@@ -885,7 +1016,7 @@ class UpdateBmcModal extends obsidian.Modal {
     var hideLabel = hideRow.createEl('label');
     var hideCheck = hideLabel.createEl('input', { type: 'checkbox' });
     hideLabel.createSpan({
-      text: t('更新後はこの案内を出さない', 'Do not show this after updates'),
+      text: t('更新後はこの案内を出さない', 'Do not show this after updates', 'Nach Updates nicht mehr anzeigen'),
     });
     hideCheck.addEventListener('change', function () {
       self.skipNext = hideCheck.checked;

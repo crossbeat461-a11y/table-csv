@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.4.4
+
+- Keep the file's delimiter (comma, semicolon, or tab) when saving
+- Keep quoting style (quote all fields vs quote only when needed)
+- If nothing changed, Obsidian save also writes the original bytes (not a regenerated CSV)
+- Column sort understands German-style numbers (`1,5` / `1.234,56`) when the OS or UI language is German
+- UI follows the Obsidian language: Japanese, English, or German
+
+### 日本語
+
+- 保存時に元ファイルの区切り文字（カンマ / セミコロン / タブ）を維持
+- 引用符の付け方（全フィールド引用 / 必要なときだけ）を維持
+- 内容が変わっていなければ、Obsidian 側の保存でも元のバイト列を書き戻す
+- OS または UI がドイツ語のとき、列の並べ替えでドイツ式の数値（`1,5` / `1.234,56`）を解釈
+- UI は Obsidian の言語設定に従う（日本語・英語・ドイツ語）
+
+### Deutsch
+
+- Trennzeichen der Datei (Komma, Semikolon oder Tab) beim Speichern beibehalten
+- Anführungszeichen-Stil beibehalten (alle Felder oder nur bei Bedarf)
+- Unveränderte Dateien werden mit den Originalbytes gespeichert, nicht neu generiert
+- Spaltensortierung versteht deutsche Zahlen (`1,5` / `1.234,56`), wenn OS oder UI auf Deutsch stehen
+- Die Oberfläche folgt der Obsidian-Sprache: Japanisch, Englisch oder Deutsch
+
 ## 1.4.3
 
 - Keep the file's original line endings (CRLF / LF / CR) when saving
