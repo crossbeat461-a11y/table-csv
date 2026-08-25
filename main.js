@@ -30,7 +30,7 @@ function parseDelimited(text, delim) {
     } else if (c === delim) {
       row.push(cell);
       cell = '';
-    } else if (c === '\n') {
+    } else if (c === '\n' || (c === '\r' && n !== '\n')) {
       row.push(cell);
       rows.push(row);
       row = [];
@@ -66,8 +66,29 @@ function needsQuote(s, delim) {
   return s.indexOf('"') !== -1 || s.indexOf('\n') !== -1 || s.indexOf('\r') !== -1 || s.indexOf(d) !== -1;
 }
 
-function serializeDelimited(rows, delim) {
+function detectNewline(text) {
+  var s = String(text || '');
+  if (s.indexOf('\r\n') !== -1) {
+    return '\r\n';
+  }
+  if (s.indexOf('\r') !== -1) {
+    return '\r';
+  }
+  return '\n';
+}
+
+function hasTrailingNewline(text) {
+  var s = String(text || '');
+  return /[\r\n]$/.test(s);
+}
+
+function hasBom(text) {
+  return String(text || '').charAt(0) === '\uFEFF';
+}
+
+function serializeDelimited(rows, delim, newline) {
   var d = delim || ',';
+  var nl = newline || '\n';
   return rows
     .map(function (row) {
       return row
@@ -80,11 +101,24 @@ function serializeDelimited(rows, delim) {
         })
         .join(d);
     })
-    .join('\n');
+    .join(nl);
 }
 
-function serializeCsv(rows) {
-  return serializeDelimited(rows, ',');
+function serializeCsv(rows, newline) {
+  return serializeDelimited(rows, ',', newline);
+}
+
+function formatCsvFile(rows, opts) {
+  opts = opts || {};
+  var nl = opts.newline || '\n';
+  var out = serializeDelimited(rows, ',', nl);
+  if (opts.trailingNewline && rows.length) {
+    out += nl;
+  }
+  if (opts.bom) {
+    out = '\uFEFF' + out;
+  }
+  return out;
 }
 
 function serializeTsv(rows) {
@@ -234,6 +268,9 @@ class TableCsvView extends obsidian.TextFileView {
     this.filterComposing = false;
     this.keepFilterFocus = false;
     this.filterCaret = null;
+    this.newline = '\n';
+    this.trailingNewline = false;
+    this.bom = false;
   }
 
   async onOpen() {
@@ -264,12 +301,23 @@ class TableCsvView extends obsidian.TextFileView {
     return this.file ? this.file.basename : 'CSV';
   }
 
+  formatCurrent() {
+    return formatCsvFile(this.rows, {
+      newline: this.newline,
+      trailingNewline: this.trailingNewline,
+      bom: this.bom,
+    });
+  }
+
   getViewData() {
-    return serializeCsv(this.rows);
+    return this.formatCurrent();
   }
 
   setViewData(data, clear) {
     this.data = data;
+    this.newline = detectNewline(data);
+    this.trailingNewline = hasTrailingNewline(data);
+    this.bom = hasBom(data);
     this.rows = parseCsv(data);
     if (clear) {
       this.filter = '';
@@ -285,11 +333,18 @@ class TableCsvView extends obsidian.TextFileView {
   clear() {
     this.data = '';
     this.rows = [];
+    this.newline = '\n';
+    this.trailingNewline = false;
+    this.bom = false;
     this.contentEl.empty();
   }
 
   persist() {
-    this.data = serializeCsv(this.rows);
+    var next = this.formatCurrent();
+    if (next === this.data) {
+      return;
+    }
+    this.data = next;
     this.requestSave();
   }
 

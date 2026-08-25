@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.4.3
+
+- Keep the file's original line endings (CRLF / LF / CR) when saving
+- Keep whether the last line had a newline
+- Keep a UTF-8 BOM when the file already had one
+- Leave Edit without changing cells and the file is not rewritten
+
+### 日本語
+
+- 保存時に元ファイルの改行（CRLF / LF / CR）を維持
+- 最終行の改行の有無を維持
+- もともと UTF-8 BOM があるファイルは BOM を残す
+- 編集モードに入ってセルを変えずに出ても、ファイルを書き直さない
+
 ## 1.4.2
 
 - Keep IME composition in the filter box (Japanese, Chinese, Korean, and other input methods)
