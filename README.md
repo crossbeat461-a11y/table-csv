@@ -52,7 +52,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.4.2** — IME-safe filter (Japanese, Chinese, Korean, and other input methods).
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.4.3** — keep original line endings when saving; Edit with no cell changes does not rewrite the file.
 
 ### Author
 
@@ -110,7 +110,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.4.2** — フィルターで日本語・中国語・韓国語などの IME 変換が途切れないように修正。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.4.3** — 保存時に元の改行を維持。セルを変えずに Edit を出てもファイルを書き直さない。
 
 ### 作者
 
