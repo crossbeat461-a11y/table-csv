@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.5.0
+
+- Create a new CSV from a folder (file explorer) or the command palette
+- New files open in Edit so you can add cells, rows, and columns from a blank table
+
+### 日本語
+
+- フォルダの右クリック、またはコマンドパレットから CSV を新規作成
+- 新規ファイルは編集モードで開き、空の表からセル・行・列を増やせる
+
+### Deutsch
+
+- Neue CSV aus einem Ordner (Dateiexplorer) oder über die Befehlspalette erstellen
+- Neue Dateien öffnen im Bearbeiten-Modus, damit Zellen, Zeilen und Spalten von einer leeren Tabelle aus ergänzt werden können
+
 ## 1.4.4
 
 - Keep the file's delimiter (comma, semicolon, or tab) when saving
