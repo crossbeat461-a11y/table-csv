@@ -1,9 +1,9 @@
 {
   "id": "table-csv",
   "name": "TableCSV",
-  "version": "1.4.4",
+  "version": "1.5.0",
   "minAppVersion": "1.5.0",
-  "description": "Open CSV files as tables. View with a text filter and column sort, pin the last row for totals, edit cells, and copy or paste via the system clipboard.",
+  "description": "Open CSV files as tables. Create a new CSV from a folder, view with a filter and sort, pin the last row, edit cells, and copy or paste via the system clipboard.",
   "author": "K-Tech Studio",
   "authorUrl": "https://github.com/crossbeat461-a11y",
   "fundingUrl": "https://buymeacoffee.com/k_tech_studio",

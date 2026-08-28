@@ -970,6 +970,25 @@ function t(ja, en, de) {
   return en;
 }
 
+function joinVaultPath(folderPath, name) {
+  if (!folderPath || folderPath === '/') {
+    return name;
+  }
+  return folderPath.replace(/\/$/, '') + '/' + name;
+}
+
+function uniqueCsvPath(vault, folderPath) {
+  var n = 0;
+  while (true) {
+    var name = n === 0 ? 'Untitled.csv' : 'Untitled ' + n + '.csv';
+    var path = joinVaultPath(folderPath, name);
+    if (!vault.getAbstractFileByPath(path)) {
+      return path;
+    }
+    n++;
+  }
+}
+
 class UpdateBmcModal extends obsidian.Modal {
   constructor(app, version, onDismiss) {
     super(app);
@@ -1034,6 +1053,7 @@ class UpdateBmcModal extends obsidian.Modal {
 
 class TableCsvPlugin extends obsidian.Plugin {
   async onload() {
+    var self = this;
     this.registerView(VIEW_TYPE, function (leaf) {
       return new TableCsvView(leaf);
     });
@@ -1045,11 +1065,58 @@ class TableCsvPlugin extends obsidian.Plugin {
     } catch (e) {
       console.warn('table-csv: registerExtensions', e);
     }
+
+    this.addCommand({
+      id: 'create-new-csv',
+      name: t('CSVを新規作成', 'Create new CSV', 'Neue CSV erstellen'),
+      callback: function () {
+        self.createNewCsv();
+      },
+    });
+
+    this.registerEvent(
+      this.app.workspace.on('file-menu', function (menu, file) {
+        if (file instanceof obsidian.TFolder) {
+          menu.addItem(function (item) {
+            item
+              .setTitle(t('CSVを新規作成', 'New CSV', 'Neue CSV'))
+              .setIcon('table')
+              .onClick(function () {
+                self.createNewCsv(file);
+              });
+          });
+        }
+      }),
+    );
+
     console.info('table-csv: loaded');
-    var self = this;
     this.app.workspace.onLayoutReady(function () {
       self.maybeShowBmcAfterUpdate();
     });
+  }
+
+  async createNewCsv(folder) {
+    var vault = this.app.vault;
+    var parent = folder instanceof obsidian.TFolder ? folder : null;
+    if (!parent) {
+      var active = this.app.workspace.getActiveFile();
+      parent = active && active.parent ? active.parent : vault.getRoot();
+    }
+    var folderPath = parent.path === '/' ? '' : parent.path;
+    var path = uniqueCsvPath(vault, folderPath);
+    try {
+      var file = await vault.create(path, '');
+      var leaf = this.app.workspace.getLeaf(false);
+      await leaf.openFile(file);
+      if (leaf.view && typeof leaf.view.setMode === 'function') {
+        leaf.view.setMode('edit');
+      }
+    } catch (e) {
+      console.error('table-csv: create', e);
+      new obsidian.Notice(
+        t('CSVを作成できませんでした', 'Could not create CSV', 'CSV konnte nicht erstellt werden'),
+      );
+    }
   }
 
   async maybeShowBmcAfterUpdate() {

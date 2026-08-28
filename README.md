@@ -19,11 +19,12 @@
 
 ## English
 
-Open `.csv` files as tables inside your vault. View and filter, or edit cells, rows, and columns.
+Open `.csv` files as tables inside your vault. View and filter, or edit cells, rows, and columns. Create a new CSV from a folder.
 
 ### Features
 
 - Open any CSV file as a clean table view
+- **Create** a new CSV from a folder (right-click) or the command palette; it opens in Edit
 - Sticky header row for easier scrolling
 - **View** mode: text filter to narrow rows (does not change the file)
 - **View** mode: click a column header to sort (asc → desc → clear; does not change the file)
@@ -39,9 +40,9 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 ### How to use
 
 1. Install **TableCSV** from Community plugins and enable it
-2. Open a `.csv` file from the file explorer
-3. **View** is the default. Type in the filter box to narrow matching rows. Click a column header to sort. Check **Pin last row** when the bottom row is a total you do not want moved
-4. Switch to **Edit** to change the file. The filter and sort are cleared so you edit the whole table
+2. Right-click a folder and choose **New CSV**, or run the same from the command palette. You can also open an existing `.csv`
+3. A new file opens in **Edit**. Existing files start in **View**. Type in the filter box to narrow matching rows. Click a column header to sort. Check **Pin last row** when the bottom row is a total you do not want moved
+4. Switch to **Edit** to change an existing file. The filter and sort are cleared so you edit the whole table
 5. Insert or delete the selected row/column with the toolbar. Click a cell to select it. Enter confirms a cell (does not move)
 6. **Copy** puts the table on the system clipboard. In View mode this is the header plus filtered rows; in Edit mode it is the whole table
 7. In **Edit**, **Paste** replaces the table with clipboard data (tab-separated from Excel, or comma-separated). `Ctrl+V` / `Cmd+V` does the same when focus is not inside a cell
@@ -54,7 +55,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.4.4** — keep delimiter and quoting style; UI in Japanese, English, and German.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.5.0** — create a new CSV from a folder; keep delimiter and quoting style; UI in Japanese, English, and German.
 
 ### Author
 
@@ -79,11 +80,12 @@ MIT
 <details open>
 <summary><strong>日本語</strong>（クリックで開閉）</summary>
 
-Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル・行・列の編集ができます。
+Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル・行・列の編集ができます。フォルダから CSV を新規作成できます。
 
 ### 機能
 
 - CSVファイルを表形式で表示
+- **新規作成**: フォルダの右クリック、またはコマンドパレット。編集モードで開く
 - 見出し行を固定してスクロールしやすい
 - **View（閲覧）**: 文字で行を絞り込む（ファイルは変更しない）
 - **View（閲覧）**: 列見出しをクリックして並べ替え（昇順 → 降順 → 解除。ファイルは変更しない）
@@ -99,9 +101,9 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 ### 使い方
 
 1. コミュニティプラグインから **TableCSV** を入れて有効にする
-2. ファイル一覧から `.csv` を開く
-3. 最初は **View**。フィルター欄に文字を入れると行が絞り込まれる。列見出しをクリックすると並べ替え。**最下行を固定** にチェックすると、合計行など最後の1行は並べ替えされず下に残る
-4. ファイルを直すときは **Edit** に切り替える。フィルターとソートは解除され、表全体を編集する
+2. ファイル一覧のフォルダを右クリックして **CSVを新規作成**、またはコマンドパレットで同じ操作。既存の `.csv` を開いてもよい
+3. 新規ファイルは **Edit**。既存ファイルは最初 **View**。フィルター欄に文字を入れると行が絞り込まれる。列見出しをクリックすると並べ替え。**最下行を固定** にチェックすると、合計行など最後の1行は並べ替えされず下に残る
+4. 既存ファイルを直すときは **Edit** に切り替える。フィルターとソートは解除され、表全体を編集する
 5. ツールバーで選択中の行・列を追加・削除する。セルをクリックして選ぶ。Enterは確定のみ（移動しない）
 6. **Copy** で表をクリップボードへ送る。Viewでは見出し＋絞り込み後の行、Editでは表全体
 7. **Edit** で **Paste** すると、クリップボードの表で置き換わる（Excelからのタブ区切り、またはカンマ区切り）。セルにフォーカスしていないときは `Ctrl+V` / `Cmd+V` でも同じ
@@ -114,7 +116,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.4.4** — 区切り文字と引用スタイルを維持。UI は日本語・英語・ドイツ語。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.5.0** — フォルダから CSV を新規作成。区切り文字と引用スタイルを維持。UI は日本語・英語・ドイツ語。
 
 ### 作者
 
@@ -141,13 +143,14 @@ MIT
 <details>
 <summary><strong>Deutsch</strong> (aufklappen)</summary>
 
-Öffnet `.csv`-Dateien als Tabellen im Vault. Anzeigen und filtern, oder Zellen, Zeilen und Spalten bearbeiten.
+Öffnet `.csv`-Dateien als Tabellen im Vault. Anzeigen und filtern, oder Zellen, Zeilen und Spalten bearbeiten. Neue CSV aus einem Ordner erstellen.
 
 Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 
 ### Funktionen
 
 - CSV-Dateien als Tabelle anzeigen
+- **Neu**: CSV aus einem Ordner oder über die Befehlspalette erstellen (öffnet im Bearbeiten-Modus)
 - Kopfzeile bleibt beim Scrollen sichtbar
 - **Ansicht**: Zeilen filtern und Spalten sortieren (Datei bleibt unverändert)
 - **Ansicht**: optional **Letzte Zeile anheften** für Summenzeilen
@@ -158,7 +161,7 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 
 ### Versionshinweise
 
-Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.4.4**.
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.5.0**.
 
 ### Lizenz
 
