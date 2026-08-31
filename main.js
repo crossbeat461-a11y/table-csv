@@ -1037,7 +1037,7 @@ class UpdateBmcModal extends obsidian.Modal {
     });
     content.createEl('p', {
       text: t(
-        'v' + this.version + ' へ更新されました。役に立ったら、開発の励みにしてください（任意）。',
+        'v' + this.version + ' へ更新されました。サポートお願いします。開発の励みになります。',
         'Updated to v' + this.version + '. If this plugin helps, consider a coffee (optional).',
         'Aktualisiert auf v' + this.version + '. Wenn dieses Plugin hilfreich ist, spendieren Sie gern einen Kaffee (optional).',
       ),
