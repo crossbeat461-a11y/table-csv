@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.6.0
+
+- View and Edit: keep the table inside the pane and show horizontal and vertical scrollbars when the CSV is larger than the window
+- Scrollbars stay visible even when the theme hides OS overlay bars
+
+### 日本語
+
+- 閲覧・編集: 表を画面内に収め、はみ出すときは縦横のスクロールバーを出す
+- テーマが OS のオーバーレイバーを隠していても、バーが見えるようにする
+
+### Deutsch
+
+- Ansicht und Bearbeiten: Tabelle im Fenster halten; horizontale und vertikale Scrollleisten, wenn die CSV größer ist
+- Scrollleisten bleiben sichtbar, auch wenn das Theme die Systemleisten ausblendet
+
 ## 1.5.0
 
 - Create a new CSV from a folder (file explorer) or the command palette

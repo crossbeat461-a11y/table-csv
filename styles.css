@@ -1,3 +1,17 @@
+html body .workspace-leaf-content[data-type="csv"].is-csv-view-mode {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+html body .workspace-leaf-content[data-type="csv"].is-csv-view-mode > .view-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: visible;
+  position: relative;
+}
+
 .table-csv-view {
   padding: 8px 12px;
   overflow: hidden;
@@ -58,6 +72,40 @@
   overflow: auto;
   flex: 1;
   min-height: 0;
+  min-width: 0;
+}
+
+html body .table-csv-view.is-view,
+html body .table-csv-view.is-edit {
+  overflow: visible;
+}
+
+html body .table-csv-view.is-view .table-csv-scroll,
+html body .table-csv-view.is-edit .table-csv-scroll {
+  flex: none;
+  height: calc(100vh - 12rem);
+  max-height: calc(100vh - 12rem);
+  overflow-x: scroll;
+  overflow-y: scroll;
+  scrollbar-width: auto;
+  scrollbar-color: var(--text-muted) var(--background-secondary);
+}
+
+html body .table-csv-view.is-view .table-csv-scroll::-webkit-scrollbar,
+html body .table-csv-view.is-edit .table-csv-scroll::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+html body .table-csv-view.is-view .table-csv-scroll::-webkit-scrollbar-track,
+html body .table-csv-view.is-edit .table-csv-scroll::-webkit-scrollbar-track {
+  background: var(--background-secondary);
+}
+
+html body .table-csv-view.is-view .table-csv-scroll::-webkit-scrollbar-thumb,
+html body .table-csv-view.is-edit .table-csv-scroll::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 7px;
 }
 
 .table-csv-table {
@@ -158,4 +206,9 @@
   align-items: center;
   gap: 6px;
   cursor: pointer;
+}
+
+.table-csv-copy-fallback {
+  position: fixed;
+  left: -9999px;
 }

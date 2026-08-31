@@ -213,15 +213,14 @@ function rowsToHtmlTable(rows) {
 }
 
 function fallbackCopyText(text) {
-  var ta = document.createElement('textarea');
+  var ta = document.body.createEl('textarea', {
+    cls: 'table-csv-copy-fallback',
+    attr: { readonly: 'readonly' },
+  });
   ta.value = text;
-  ta.setAttribute('readonly', '');
-  ta.style.position = 'fixed';
-  ta.style.left = '-9999px';
-  document.body.appendChild(ta);
   ta.select();
   var ok = document.execCommand('copy');
-  document.body.removeChild(ta);
+  ta.remove();
   if (!ok) {
     throw new Error('execCommand copy failed');
   }
@@ -369,11 +368,37 @@ class TableCsvView extends obsidian.TextFileView {
     this.bom = false;
     this.delim = ',';
     this.quoteAll = false;
+    this.leafHostEl = null;
+  }
+
+  syncViewLeafClass() {
+    try {
+      var host =
+        this.containerEl && this.containerEl.closest
+          ? this.containerEl.closest('.workspace-leaf-content')
+          : null;
+      if (!host) {
+        return;
+      }
+      this.leafHostEl = host;
+      host.toggleClass('is-csv-view-mode', this.mode === 'view' || this.mode === 'edit');
+    } catch (e) {
+      /* ignore */
+    }
   }
 
   async onOpen() {
     await super.onOpen();
     var self = this;
+    this.register(function () {
+      try {
+        if (self.leafHostEl) {
+          self.leafHostEl.removeClass('is-csv-view-mode');
+        }
+      } catch (e) {
+        /* ignore */
+      }
+    });
     this.registerDomEvent(this.contentEl, 'paste', function (ev) {
       if (self.mode !== 'edit') {
         return;
@@ -703,6 +728,8 @@ class TableCsvView extends obsidian.TextFileView {
     el.empty();
     el.addClass('table-csv-view');
     el.toggleClass('is-edit', this.mode === 'edit');
+    el.toggleClass('is-view', this.mode === 'view');
+    this.syncViewLeafClass();
 
     var toolbar = el.createDiv({ cls: 'table-csv-toolbar' });
     var viewBtn = toolbar.createEl('button', { text: t('閲覧', 'View', 'Ansicht'), type: 'button' });
@@ -946,7 +973,10 @@ var BMC_URL = 'https://buymeacoffee.com/k_tech_studio';
 
 function uiLang() {
   try {
-    var lang = String((window.localStorage && window.localStorage.getItem('language')) || '').toLowerCase();
+    var lang = '';
+    if (typeof obsidian.getLanguage === 'function') {
+      lang = String(obsidian.getLanguage() || '').toLowerCase();
+    }
     if (lang.startsWith('ja')) {
       return 'ja';
     }
@@ -1063,7 +1093,7 @@ class TableCsvPlugin extends obsidian.Plugin {
       }
       this.registerExtensions(['csv'], VIEW_TYPE);
     } catch (e) {
-      console.warn('table-csv: registerExtensions', e);
+      /* ignore */
     }
 
     this.addCommand({
@@ -1089,7 +1119,6 @@ class TableCsvPlugin extends obsidian.Plugin {
       }),
     );
 
-    console.info('table-csv: loaded');
     this.app.workspace.onLayoutReady(function () {
       self.maybeShowBmcAfterUpdate();
     });
@@ -1112,7 +1141,6 @@ class TableCsvPlugin extends obsidian.Plugin {
         leaf.view.setMode('edit');
       }
     } catch (e) {
-      console.error('table-csv: create', e);
       new obsidian.Notice(
         t('CSVを作成できませんでした', 'Could not create CSV', 'CSV konnte nicht erstellt werden'),
       );
