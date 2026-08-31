@@ -6,7 +6,7 @@
 [![GitHub downloads](https://img.shields.io/github/downloads/crossbeat461-a11y/table-csv/total?style=for-the-badge)](https://github.com/crossbeat461-a11y/table-csv/releases)
 [![Obsidian downloads](https://img.shields.io/badge/dynamic/json?style=for-the-badge&logo=obsidian&color=%23483699&label=downloads&query=%24%5B%22table-csv%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=table-csv)
 [![Release](https://img.shields.io/github/actions/workflow/status/crossbeat461-a11y/table-csv/release.yml?style=for-the-badge&label=Release)](https://github.com/crossbeat461-a11y/table-csv/actions/workflows/release.yml)
-![Obsidian](https://img.shields.io/badge/Obsidian-1.5.0%2B-483699?style=for-the-badge&logo=obsidian&logoColor=white)
+![Obsidian](https://img.shields.io/badge/Obsidian-1.8.7%2B-483699?style=for-the-badge&logo=obsidian&logoColor=white)
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/k_tech_studio)
 
 **[English](#readme-en)** · **[日本語](#readme-ja)** · **[Deutsch](#readme-de)**
@@ -55,7 +55,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.5.0** — create a new CSV from a folder; keep delimiter and quoting style; UI in Japanese, English, and German.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.6.0** — View and Edit keep large tables inside the pane with visible scrollbars.
 
 ### Author
 
@@ -116,7 +116,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.5.0** — フォルダから CSV を新規作成。区切り文字と引用スタイルを維持。UI は日本語・英語・ドイツ語。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.6.0** — 閲覧・編集で大きい表を画面内に収め、縦横のスクロールバーを出す。
 
 ### 作者
 
@@ -161,7 +161,7 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 
 ### Versionshinweise
 
-Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.5.0**.
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.6.0**.
 
 ### Lizenz
 
