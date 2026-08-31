@@ -55,7 +55,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.6.0** — View and Edit keep large tables inside the pane with visible scrollbars.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.6.1** — Japanese update support wording.
 
 ### Author
 
@@ -116,7 +116,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.6.0** — 閲覧・編集で大きい表を画面内に収め、縦横のスクロールバーを出す。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.6.1** — 更新後の案内を「サポートお願いします。開発の励みになります。」に変更。
 
 ### 作者
 
@@ -161,7 +161,7 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 
 ### Versionshinweise
 
-Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.6.0**.
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.6.1**.
 
 ### Lizenz
 

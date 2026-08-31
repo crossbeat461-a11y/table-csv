@@ -1,7 +1,7 @@
 {
   "id": "table-csv",
   "name": "TableCSV",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "minAppVersion": "1.8.7",
   "description": "Open CSV files as tables. Create a new CSV from a folder, view with a filter and sort, pin the last row, edit cells, and copy or paste via the system clipboard.",
   "author": "K-Tech Studio",

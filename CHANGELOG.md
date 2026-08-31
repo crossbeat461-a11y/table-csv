@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.6.1
+
+- Japanese update support text: 「サポートお願いします。開発の励みになります。」
+
+### 日本語
+
+- 更新後の案内を「サポートお願いします。開発の励みになります。」に変更
+
+### Deutsch
+
+- Japanischer Hinweistext nach dem Update: 「サポートお願いします。開発の励みになります。」
+
 ## 1.6.0
 
 - View and Edit: keep the table inside the pane and show horizontal and vertical scrollbars when the CSV is larger than the window
