@@ -124,6 +124,104 @@ function parseClipboardTable(text) {
   return parseDelimited(raw, detectDelimiter(raw)).rows;
 }
 
+function isMultiCell(rows) {
+  if (!rows || !rows.length) {
+    return false;
+  }
+  if (rows.length > 1) {
+    return true;
+  }
+  return !!(rows[0] && rows[0].length > 1);
+}
+
+function htmlCellText(el) {
+  var s = '';
+  try {
+    s = el.innerText != null ? String(el.innerText) : String(el.textContent || '');
+  } catch (e) {
+    s = '';
+  }
+  return s.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\u00a0/g, ' ').replace(/\n+$/g, '');
+}
+
+function parseHtmlTable(html) {
+  var raw = String(html || '');
+  if (!raw || raw.toLowerCase().indexOf('<table') === -1) {
+    return [];
+  }
+  var doc;
+  try {
+    doc = new DOMParser().parseFromString(raw, 'text/html');
+  } catch (e) {
+    return [];
+  }
+  if (!doc) {
+    return [];
+  }
+  var tables = doc.querySelectorAll('table');
+  var best = [];
+  var bestScore = 0;
+  var t;
+  for (t = 0; t < tables.length; t++) {
+    var rows = [];
+    var trs = tables[t].querySelectorAll('tr');
+    var i;
+    for (i = 0; i < trs.length; i++) {
+      var cells = trs[i].querySelectorAll('th, td');
+      if (!cells.length) {
+        continue;
+      }
+      var row = [];
+      var j;
+      for (j = 0; j < cells.length; j++) {
+        row.push(htmlCellText(cells[j]));
+      }
+      rows.push(row);
+    }
+    var score = rows.length * colCountOf(rows);
+    if (score > bestScore) {
+      best = rows;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+function parseClipboardToRows(text, html) {
+  var fromText = [];
+  var fromHtml = [];
+  try {
+    fromText = parseClipboardTable(text);
+  } catch (e) {
+    fromText = [];
+  }
+  if (isMultiCell(fromText)) {
+    return fromText;
+  }
+  try {
+    fromHtml = parseHtmlTable(html);
+  } catch (e) {
+    fromHtml = [];
+  }
+  if (isMultiCell(fromHtml)) {
+    return fromHtml;
+  }
+  if (fromText && fromText.length) {
+    return fromText;
+  }
+  return fromHtml && fromHtml.length ? fromHtml : [];
+}
+
+function padAllRows(rows) {
+  var cols = colCountOf(rows);
+  var i;
+  for (i = 0; i < rows.length; i++) {
+    while (rows[i].length < cols) {
+      rows[i].push('');
+    }
+  }
+}
+
 function detectNewline(text) {
   var s = String(text || '');
   if (s.indexOf('\r\n') !== -1) {
@@ -403,16 +501,18 @@ class TableCsvView extends obsidian.TextFileView {
       if (self.mode !== 'edit') {
         return;
       }
-      var t = ev.target;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) {
-        return;
+      try {
+        var text = ev.clipboardData ? ev.clipboardData.getData('text/plain') : '';
+        var html = ev.clipboardData ? ev.clipboardData.getData('text/html') : '';
+        var rows = parseClipboardToRows(text, html);
+        if (!isMultiCell(rows)) {
+          return;
+        }
+        ev.preventDefault();
+        self.applyClipboardRows(rows);
+      } catch (e) {
+        /* keep native paste so a cell is not left empty */
       }
-      var text = ev.clipboardData ? ev.clipboardData.getData('text/plain') : '';
-      if (!text) {
-        return;
-      }
-      ev.preventDefault();
-      self.applyPastedText(text);
     });
   }
 
@@ -525,35 +625,82 @@ class TableCsvView extends obsidian.TextFileView {
     }
   }
 
+  async readClipboardPayload() {
+    var text = '';
+    var html = '';
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.read === 'function') {
+        var items = await navigator.clipboard.read();
+        var i;
+        for (i = 0; i < items.length; i++) {
+          var item = items[i];
+          var types = item.types || [];
+          if (!html && types.indexOf('text/html') !== -1) {
+            html = await (await item.getType('text/html')).text();
+          }
+          if (!text && types.indexOf('text/plain') !== -1) {
+            text = await (await item.getType('text/plain')).text();
+          }
+        }
+      }
+    } catch (e) {
+      /* fall through to readText */
+    }
+    if (!text) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+          text = await navigator.clipboard.readText();
+        }
+      } catch (e2) {
+        throw e2;
+      }
+    }
+    return { text: text, html: html };
+  }
+
   async pasteTable() {
     if (this.mode !== 'edit') {
       new obsidian.Notice(t('貼り付けるには編集モードに切り替えてください', 'Switch to Edit to paste', 'Zum Einfügen in den Bearbeiten-Modus wechseln'));
       return;
     }
-    var text = '';
+    var payload;
     try {
-      if (navigator.clipboard && navigator.clipboard.readText) {
-        text = await navigator.clipboard.readText();
-      }
+      payload = await this.readClipboardPayload();
     } catch (e) {
       new obsidian.Notice(t('クリップボードを読めませんでした', 'Could not read clipboard', 'Zwischenablage konnte nicht gelesen werden'));
       return;
     }
-    this.applyPastedText(text);
+    this.applyClipboardRows(parseClipboardToRows(payload.text, payload.html));
   }
 
-  applyPastedText(text) {
-    var rows = parseClipboardTable(text);
-    if (!rows.length) {
+  applyClipboardRows(rows) {
+    if (!rows || !rows.length) {
       new obsidian.Notice(t('クリップボードが空です', 'Clipboard is empty', 'Zwischenablage ist leer'));
       return;
     }
-    this.rows = rows;
-    this.selRow = 0;
-    this.selCol = 0;
-    this.persist();
-    this.render();
-    new obsidian.Notice(t('表を貼り付けました', 'Pasted table', 'Tabelle eingefügt'));
+    try {
+      this.pasteAtSelection(rows);
+      this.persist();
+      this.render();
+      new obsidian.Notice(t('表を貼り付けました', 'Pasted table', 'Tabelle eingefügt'));
+    } catch (e) {
+      new obsidian.Notice(t('貼り付けに失敗しました', 'Paste failed', 'Einfügen fehlgeschlagen'));
+    }
+  }
+
+  pasteAtSelection(block) {
+    var startR = this.rows.length ? Math.max(0, this.selRow) : 0;
+    var startC = this.rows.length ? Math.max(0, this.selCol) : 0;
+    var i;
+    var j;
+    for (i = 0; i < block.length; i++) {
+      var row = block[i] || [];
+      for (j = 0; j < row.length; j++) {
+        ensureCell(this.rows, startR + i, startC + j);
+        this.rows[startR + i][startC + j] = String(row[j] == null ? '' : row[j]);
+      }
+    }
+    padAllRows(this.rows);
   }
 
   setMode(mode) {
@@ -818,7 +965,7 @@ class TableCsvView extends obsidian.TextFileView {
     } else {
       var pasteBtn = toolbar.createEl('button', { text: t('貼り付け', 'Paste', 'Einfügen'), type: 'button' });
       pasteBtn.addEventListener('click', function () {
-        self.pasteTable();
+        void self.pasteTable();
       });
       var insertRowBtn = toolbar.createEl('button', { text: t('行を追加', 'Insert row', 'Zeile einfügen'), type: 'button' });
       var deleteRowBtn = toolbar.createEl('button', { text: t('行を削除', 'Delete row', 'Zeile löschen'), type: 'button' });

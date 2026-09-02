@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.7.0
+
+- Edit: paste a copied range (Excel, Word, or TSV) into the selected cell with Ctrl+V / Cmd+V, right-click Paste, or the toolbar
+- A 10×10 selection stays 10×10 and fills right and down from the selected cell; extra rows and columns are added as needed
+- A single cell paste still goes into that cell only
+- Word / browser tables use the HTML table on the clipboard when tab-separated text is missing
+
+### 日本語
+
+- 編集: Excel・Word・TSV の範囲を、選んだセルから `Ctrl+V` / `Cmd+V`、右クリックの貼り付け、またはツールバーで貼れる
+- 10×10 の選択は 10×10 のまま、選んだセルから右下へ入る。足りない行・列は足す
+- 1セルだけの貼り付けは、これまでどおりそのセルだけに入る
+- タブ区切りが無いときは、クリップボードの HTML 表（Word / ブラウザ）を読む
+
+### Deutsch
+
+- Bearbeiten: Einen kopierten Bereich (Excel, Word oder TSV) in die gewählte Zelle einfügen — mit Strg+V / Cmd+V, Rechtsklick oder der Symbolleiste
+- Eine 10×10-Auswahl bleibt 10×10 und füllt von der gewählten Zelle nach rechts unten; fehlende Zeilen und Spalten werden ergänzt
+- Ein einzelner Zelleninhalt landet weiter nur in dieser Zelle
+- Fehlt TSV, wird die HTML-Tabelle der Zwischenablage (Word / Browser) gelesen
+
 ## 1.6.1
 
 - Japanese update support text: 「サポートお願いします。開発の励みになります。」

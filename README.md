@@ -31,7 +31,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 - **View** mode: optional **Pin last row** for CSVs with a totals row at the bottom (keeps that row out of sort)
 - **Edit** mode: change cells, insert/delete rows and columns, then save to the vault
 - **Copy** uses the OS clipboard (tab-separated). Paste into Excel, Notepad, or TextEdit
-- **Paste** (Edit mode) reads a table from the clipboard — from Excel or a text editor — and writes it as CSV
+- **Paste** (Edit mode): copy a range in Excel (or Word / a text table) and paste with `Ctrl+V` / `Cmd+V`, right-click Paste, or the toolbar. A 10×10 stays 10×10, starting at the selected cell
 - Empty rows and columns stay as you left them
 - Saving keeps the file's delimiter, quoting style, line endings, and UTF-8 BOM
 - UI follows the Obsidian language (Japanese, English, or German)
@@ -45,17 +45,18 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 4. Switch to **Edit** to change an existing file. The filter and sort are cleared so you edit the whole table
 5. Insert or delete the selected row/column with the toolbar. Click a cell to select it. Enter confirms a cell (does not move)
 6. **Copy** puts the table on the system clipboard. In View mode this is the header plus filtered rows; in Edit mode it is the whole table
-7. In **Edit**, **Paste** replaces the table with clipboard data (tab-separated from Excel, or comma-separated). `Ctrl+V` / `Cmd+V` does the same when focus is not inside a cell
+7. In **Edit**, select a cell and paste (`Ctrl+V` / `Cmd+V`, right-click Paste, or the toolbar **Paste** button). Excel, Word, and tab-separated text fill right and down from that cell. Extra rows and columns are added if the range is larger. A single copied cell still pastes into the selected cell only
 
 ### Tips
 
 - Very large CSV files may take longer to render
 - View mode never writes. Edit mode saves to the same `.csv` file in the vault
-- Copy uses the system clipboard. It does not require a companion spreadsheet plugin
+- Copy and paste use the system clipboard. They do not require a companion spreadsheet plugin
+- Paste does not open `.xlsx` or `.docx` files. Copy the cells in Excel or Word first, then paste into TableCSV
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.6.1** — Japanese update support wording.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.7.0** — Excel-style range paste into the selected cell.
 
 ### Author
 
@@ -92,7 +93,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 - **View（閲覧）**: **最下行を固定** — 合計行など最後の1行を並べ替え対象外にできる
 - **Edit（編集）**: セルの変更、行・列の追加・削除。Vault内の同じCSVに保存する
 - **Copy（コピー）**: OSのクリップボードへ（タブ区切り）。Excel、メモ帳、TextEditに貼り付けできる
-- **Paste（貼り付け）**（編集モード）: Excelやテキストエディタからコピーした表を読み、CSVとして保存する
+- **Paste（貼り付け）**（編集モード）: Excel（または Word / テキストの表）で範囲をコピーし、`Ctrl+V` / `Cmd+V`、右クリックの貼り付け、またはツールバーで貼る。10×10 は 10×10 のまま、選んだセルから入る
 - 空の行・列はそのまま残る
 - 保存時に区切り文字・引用符の付け方・改行・UTF-8 BOM を維持
 - UI は Obsidian の言語設定に従う（日本語・英語・ドイツ語）
@@ -106,17 +107,18 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 4. 既存ファイルを直すときは **Edit** に切り替える。フィルターとソートは解除され、表全体を編集する
 5. ツールバーで選択中の行・列を追加・削除する。セルをクリックして選ぶ。Enterは確定のみ（移動しない）
 6. **Copy** で表をクリップボードへ送る。Viewでは見出し＋絞り込み後の行、Editでは表全体
-7. **Edit** で **Paste** すると、クリップボードの表で置き換わる（Excelからのタブ区切り、またはカンマ区切り）。セルにフォーカスしていないときは `Ctrl+V` / `Cmd+V` でも同じ
+7. **Edit** でセルを選んで貼る（`Ctrl+V` / `Cmd+V`、右クリックの貼り付け、またはツールバーの **貼り付け**）。Excel・Word・タブ区切りは、そのセルから右下へ入る。範囲が大きければ行・列を足す。1セルだけのコピーは、そのセルだけに入る
 
 ### ヒント
 
 - とても大きいCSVは表示に時間がかかることがある
 - Viewは書き込まない。EditはVault内の同じ `.csv` に保存する
-- コピーはOSのクリップボードを使う。別の表計算プラグインは不要
+- コピーと貼り付けはOSのクリップボードを使う。別の表計算プラグインは不要
+- `.xlsx` や `.docx` はそのまま開けない。Excel や Word でセルをコピーしてから TableCSV に貼る
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.6.1** — 更新後の案内を「サポートお願いします。開発の励みになります。」に変更。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.7.0** — 選んだセルから Excel と同じ範囲貼り付け。
 
 ### 作者
 
@@ -157,11 +159,12 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 - **Bearbeiten**: Zellen, Zeilen und Spalten ändern und in die gleiche Datei speichern
 - Speichern behält Trennzeichen, Anführungszeichen-Stil, Zeilenenden und UTF-8-BOM
 - **Kopieren** / **Einfügen** über die Systemzwischenablage
+- **Einfügen** (Bearbeiten): Bereich in Excel kopieren, Zelle wählen, Strg+V / Cmd+V, Rechtsklick oder Symbolleiste. 10×10 bleibt 10×10, ab der gewählten Zelle
 - Vollständig offline
 
 ### Versionshinweise
 
-Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.6.1**.
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.7.0** — Bereich einfügen wie in Excel.
 
 ### Lizenz
 
