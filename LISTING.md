@@ -23,7 +23,7 @@ Create a new CSV from a folder (file explorer) or the command palette.
 View mode filters rows without changing the file.
 Edit mode updates cells, rows, and columns, then saves.
 Copy puts the current table on the OS clipboard (tab-separated) so you can paste into Excel, Notepad, or TextEdit on Windows and Mac.
-Paste (Edit mode) reads a table from the clipboard and saves it as CSV. Fully offline — no network requests.
+Paste (Edit mode) puts a copied Excel or Word range into the selected cell — a 10×10 stays 10×10. Fully offline — no network requests.
 ```
 
 ## Suggested categories / tags
