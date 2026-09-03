@@ -56,10 +56,11 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 - View mode does not change the open file. **Export filtered** creates a new CSV beside it. Edit mode saves to the same `.csv` file in the vault
 - Copy and paste use the system clipboard. They do not require a companion spreadsheet plugin
 - Paste does not open `.xlsx` or `.docx` files. Copy the cells in Excel or Word first, then paste into TableCSV
+- German / EU Excel CSV uses `;`. TableCSV keeps that delimiter. Values like `1,5` stay in one cell. Column sort reads them as numbers when the UI or OS is German
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.9.0** — Tab / Enter move between cells in Edit; IME composition is left alone.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.9.1** — German/EU semicolon CSV is detected even when decimal commas outnumber semicolons.
 
 ### Author
 
@@ -121,10 +122,11 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 - Viewは開いているファイルを変えない。**絞り込みを書き出す** は隣に新しいCSVを作る。EditはVault内の同じ `.csv` に保存する
 - コピーと貼り付けはOSのクリップボードを使う。別の表計算プラグインは不要
 - `.xlsx` や `.docx` はそのまま開けない。Excel や Word でセルをコピーしてから TableCSV に貼る
+- ドイツ / EU の Excel は `;` 区切り。保存時もそのまま。`1,5` は1セル。UI または OS がドイツ語なら並べ替えで数値として扱う
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.9.0** — 編集で `Tab` / `Enter` によるセル移動。変換中は動かない。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.9.1** — 小数カンマが多くてもドイツ式（`;` 区切り）として読む。
 
 ### 作者
 
@@ -169,10 +171,11 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 - **Kopieren** / **Einfügen** über die Systemzwischenablage
 - **Einfügen** (Bearbeiten): Bereich in Excel kopieren, Zelle wählen, Strg+V / Cmd+V, Rechtsklick oder Symbolleiste. 10×10 bleibt 10×10, ab der gewählten Zelle
 - Vollständig offline
+- Excel in DE/EU nutzt `;`. TableCSV behält das Trennzeichen. `1,5` bleibt eine Zelle
 
 ### Versionshinweise
 
-Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.9.0** — Tab / Enter wechseln im Bearbeiten-Modus die Zelle; IME bleibt unberührt.
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.9.1** — Semikolon-CSV wird erkannt, auch wenn Dezimalkommas häufiger sind.
 
 ### Lizenz
 
