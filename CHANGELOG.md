@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.9.1
+
+- Detect semicolon CSV even when decimal commas (`1,5`) outnumber the semicolons
+- New or empty CSV uses a semicolon when the UI or OS language is German
+- German number sort (`1,5` / `1.234,56` / `1 234,56`) only when the UI or OS is actually German — not for Japanese or English
+
+### 日本語
+
+- 小数カンマ（`1,5`）がセミコロンより多くても、ドイツ式（`;` 区切り）として読む
+- 新規・空の CSV は、UI または OS がドイツ語ならセミコロン区切り
+- ドイツ式の数値並べ替え（`1,5` / `1.234,56` / `1 234,56`）は、UI または OS がドイツ語のときだけ。日本語・英語では使わない
+
+### Deutsch
+
+- Semikolon-CSV wird erkannt, auch wenn Dezimalkommas (`1,5`) häufiger sind als Semikolons
+- Neue oder leere CSV nutzt Semikolon, wenn UI oder Betriebssystem auf Deutsch stehen
+- Deutsche Zahlensortierung (`1,5` / `1.234,56` / `1 234,56`) nur bei deutscher UI oder OS — nicht bei Japanisch oder Englisch
+
 ## 1.9.0
 
 - Edit: Tab / Shift+Tab move to the next or previous cell; Enter / Shift+Enter move down or up

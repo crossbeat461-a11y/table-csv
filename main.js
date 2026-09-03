@@ -16,12 +16,41 @@ function needsQuote(s, delim) {
   return false;
 }
 
+function defaultDelimiter() {
+  try {
+    if (isGermanNumeric()) {
+      return ';';
+    }
+  } catch (e) {
+    /* ignore */
+  }
+  return ',';
+}
+
 function detectDelimiter(text) {
   var raw = String(text || '').replace(/^\uFEFF/, '');
-  var counts = { ',': 0, ';': 0, '\t': 0 };
+  var fallback = defaultDelimiter();
+  if (!raw.length) {
+    return fallback;
+  }
+  var candidates = [',', ';', '\t'];
+  var perLine = { ',': [], ';': [], '\t': [] };
+  var lineCounts = { ',': 0, ';': 0, '\t': 0 };
   var inQuotes = false;
   var lines = 0;
-  for (var i = 0; i < raw.length && lines < 20; i++) {
+  var i;
+
+  function finishLine() {
+    perLine[','].push(lineCounts[',']);
+    perLine[';'].push(lineCounts[';']);
+    perLine['\t'].push(lineCounts['\t']);
+    lineCounts[','] = 0;
+    lineCounts[';'] = 0;
+    lineCounts['\t'] = 0;
+    lines++;
+  }
+
+  for (i = 0; i < raw.length && lines < 20; i++) {
     var c = raw[i];
     var n = raw[i + 1];
     if (inQuotes) {
@@ -33,21 +62,64 @@ function detectDelimiter(text) {
     } else if (c === '"') {
       inQuotes = true;
     } else if (c === ',' || c === ';' || c === '\t') {
-      counts[c]++;
+      lineCounts[c]++;
     } else if (c === '\n' || (c === '\r' && n !== '\n')) {
-      lines++;
+      finishLine();
     }
   }
-  var best = ',';
-  var bestN = counts[','];
-  if (counts[';'] > bestN) {
-    best = ';';
-    bestN = counts[';'];
+  if (lines < 20 && !/[\r\n]$/.test(raw)) {
+    finishLine();
   }
-  if (counts['\t'] > bestN) {
-    best = '\t';
+
+  var bestDelim = fallback;
+  var bestScore = 0;
+  for (i = 0; i < candidates.length; i++) {
+    var d = candidates[i];
+    var arr = perLine[d];
+    var freq = {};
+    var j;
+    for (j = 0; j < arr.length; j++) {
+      var key = String(arr[j]);
+      freq[key] = (freq[key] || 0) + 1;
+    }
+    var mode = 0;
+    var modeN = 0;
+    var keys = Object.keys(freq);
+    for (j = 0; j < keys.length; j++) {
+      var nCount = Number(keys[j]);
+      var hits = freq[keys[j]];
+      if (hits > modeN || (hits === modeN && nCount > mode)) {
+        modeN = hits;
+        mode = nCount;
+      }
+    }
+    var first = arr.length ? arr[0] : 0;
+    var score = mode < 1 || mode !== first ? 0 : modeN * 100 + mode;
+    if (score > bestScore) {
+      bestScore = score;
+      bestDelim = d;
+    } else if (score === bestScore && score > 0 && fallback === ';' && d === ';') {
+      bestDelim = d;
+    }
   }
-  return best;
+  if (bestScore === 0) {
+    var commaSeen = false;
+    var otherSeen = false;
+    var k;
+    for (k = 0; k < perLine[','].length; k++) {
+      if (perLine[','][k] > 0) {
+        commaSeen = true;
+      }
+      if (perLine[';'][k] > 0 || perLine['\t'][k] > 0) {
+        otherSeen = true;
+      }
+    }
+    if (commaSeen && !otherSeen) {
+      return ';';
+    }
+    return fallback;
+  }
+  return bestDelim;
 }
 
 function parseDelimited(text, delim) {
@@ -381,9 +453,21 @@ function isGermanNumeric() {
   } catch (e) {
     /* ignore */
   }
-  var list = sortLocales();
-  for (var i = 0; i < list.length; i++) {
-    if (String(list[i]).toLowerCase().startsWith('de')) {
+  var list = [];
+  try {
+    if (typeof navigator !== 'undefined' && navigator.languages && navigator.languages.length) {
+      for (var i = 0; i < navigator.languages.length; i++) {
+        list.push(navigator.languages[i]);
+      }
+    } else if (typeof navigator !== 'undefined' && navigator.language) {
+      list.push(navigator.language);
+    }
+  } catch (e2) {
+    /* ignore */
+  }
+  var j;
+  for (j = 0; j < list.length; j++) {
+    if (String(list[j]).toLowerCase().startsWith('de')) {
       return true;
     }
   }
@@ -397,6 +481,7 @@ function parseSortNumber(s) {
   }
   var t = raw;
   if (isGermanNumeric()) {
+    t = t.replace(/\u00a0/g, ' ').replace(/ /g, '');
     if (t.indexOf(',') !== -1) {
       t = t.replace(/\./g, '').replace(',', '.');
     } else if (/^-?\d{1,3}(\.\d{3})+$/.test(t)) {
@@ -526,7 +611,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.newline = '\n';
     this.trailingNewline = false;
     this.bom = false;
-    this.delim = ',';
+    this.delim = defaultDelimiter();
     this.quoteAll = false;
     this.leafHostEl = null;
   }
@@ -636,7 +721,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.newline = '\n';
     this.trailingNewline = false;
     this.bom = false;
-    this.delim = ',';
+    this.delim = defaultDelimiter();
     this.quoteAll = false;
     this.contentEl.empty();
   }
