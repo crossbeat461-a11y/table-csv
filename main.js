@@ -438,6 +438,64 @@ function compareCells(a, b) {
   return sa.localeCompare(sb, sortLocales(), { numeric: true, sensitivity: 'base' });
 }
 
+function isImeKeydown(ev) {
+  if (!ev) {
+    return false;
+  }
+  if (ev.isComposing) {
+    return true;
+  }
+  if (ev.key === 'Process') {
+    return true;
+  }
+  return ev.keyCode === 229;
+}
+
+function nextEditCell(row, col, rowCount, colCount, key, shift) {
+  var r = row;
+  var c = col;
+  if (rowCount < 1 || colCount < 1) {
+    return { r: r, c: c };
+  }
+  if (r < 0) {
+    r = 0;
+  }
+  if (c < 0) {
+    c = 0;
+  }
+  if (r >= rowCount) {
+    r = rowCount - 1;
+  }
+  if (c >= colCount) {
+    c = colCount - 1;
+  }
+  if (key === 'Enter') {
+    if (shift) {
+      return r > 0 ? { r: r - 1, c: c } : { r: r, c: c };
+    }
+    return r < rowCount - 1 ? { r: r + 1, c: c } : { r: r, c: c };
+  }
+  if (key === 'Tab') {
+    if (shift) {
+      if (c > 0) {
+        return { r: r, c: c - 1 };
+      }
+      if (r > 0) {
+        return { r: r - 1, c: colCount - 1 };
+      }
+      return { r: r, c: c };
+    }
+    if (c < colCount - 1) {
+      return { r: r, c: c + 1 };
+    }
+    if (r < rowCount - 1) {
+      return { r: r + 1, c: 0 };
+    }
+    return { r: r, c: c };
+  }
+  return { r: r, c: c };
+}
+
 function ensureCell(rows, r, c) {
   while (rows.length <= r) {
     rows.push([]);
@@ -460,6 +518,9 @@ class TableCsvView extends obsidian.TextFileView {
     this.pinLastRow = false;
     this.pinFirstCol = false;
     this.filterComposing = false;
+    this.cellComposing = false;
+    this.ignoreEnterAfterIme = false;
+    this.imeEnterTimer = null;
     this.keepFilterFocus = false;
     this.filterCaret = null;
     this.newline = '\n';
@@ -491,6 +552,10 @@ class TableCsvView extends obsidian.TextFileView {
     var self = this;
     this.register(function () {
       try {
+        if (self.imeEnterTimer) {
+          window.clearTimeout(self.imeEnterTimer);
+          self.imeEnterTimer = null;
+        }
         if (self.leafHostEl) {
           self.leafHostEl.removeClass('is-csv-view-mode');
         }
@@ -566,6 +631,8 @@ class TableCsvView extends obsidian.TextFileView {
   clear() {
     this.data = '';
     this.rows = [];
+    this.cellComposing = false;
+    this.ignoreEnterAfterIme = false;
     this.newline = '\n';
     this.trailingNewline = false;
     this.bom = false;
@@ -1177,14 +1244,54 @@ class TableCsvView extends obsidian.TextFileView {
     }
   }
 
+  markImeCompositionEnd() {
+    var self = this;
+    this.cellComposing = false;
+    this.ignoreEnterAfterIme = true;
+    if (this.imeEnterTimer) {
+      window.clearTimeout(this.imeEnterTimer);
+    }
+    this.imeEnterTimer = window.setTimeout(function () {
+      self.ignoreEnterAfterIme = false;
+      self.imeEnterTimer = null;
+    }, 50);
+  }
+
+  focusEditCell(r, c) {
+    this.selRow = r;
+    this.selCol = c;
+    var next = this.contentEl.querySelector(
+      '.table-csv-cell-input[data-row="' + String(r) + '"][data-col="' + String(c) + '"]',
+    );
+    if (!next) {
+      return;
+    }
+    next.focus();
+    try {
+      next.select();
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   bindCell(host, r, c, val, isHeader) {
     var self = this;
     var field = host.createEl('input', {
       type: 'text',
       cls: isHeader ? 'table-csv-cell-input is-header' : 'table-csv-cell-input',
-      attr: { title: val },
+      attr: {
+        title: val,
+        'data-row': String(r),
+        'data-col': String(c),
+      },
     });
     field.value = val;
+    field.addEventListener('compositionstart', function () {
+      self.cellComposing = true;
+    });
+    field.addEventListener('compositionend', function () {
+      self.markImeCompositionEnd();
+    });
     field.addEventListener('focus', function () {
       self.selRow = r;
       self.selCol = c;
@@ -1202,10 +1309,30 @@ class TableCsvView extends obsidian.TextFileView {
       self.persist();
     });
     field.addEventListener('keydown', function (ev) {
-      if (ev.key === 'Enter') {
-        ev.preventDefault();
-        field.blur();
+      if (isImeKeydown(ev) || self.cellComposing) {
+        if (ev.key === 'Tab') {
+          ev.preventDefault();
+        }
+        return;
       }
+      if (ev.ctrlKey || ev.metaKey || ev.altKey) {
+        return;
+      }
+      var key = ev.key === 'Tab' ? 'Tab' : ev.key === 'Enter' ? 'Enter' : '';
+      if (!key) {
+        return;
+      }
+      if (key === 'Enter' && self.ignoreEnterAfterIme) {
+        ev.preventDefault();
+        return;
+      }
+      var cols = colCountOf(self.rows);
+      var pos = nextEditCell(self.selRow, self.selCol, self.rows.length, cols, key, ev.shiftKey);
+      ev.preventDefault();
+      if (pos.r === self.selRow && pos.c === self.selCol) {
+        return;
+      }
+      self.focusEditCell(pos.r, pos.c);
     });
   }
 }

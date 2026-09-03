@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.9.0
+
+- Edit: Tab / Shift+Tab move to the next or previous cell; Enter / Shift+Enter move down or up
+- Tab at the end of a row wraps to the first cell of the next row
+- IME composition (Japanese, Chinese, Korean, and other input methods) is left alone — confirming a conversion does not move to another cell
+
+### 日本語
+
+- 編集: `Tab` / `Shift+Tab` で左右のセルへ、`Enter` / `Shift+Enter` で上下のセルへ進む
+- 行末の `Tab` は次の行の先頭に進む
+- 変換中（日本語・中国語・韓国語など）は動かない。変換を確定しただけでは次のセルへ進まない
+
+### Deutsch
+
+- Bearbeiten: Tab / Umschalt+Tab zur nächsten oder vorherigen Zelle; Enter / Umschalt+Enter nach unten oder oben
+- Tab am Zeilenende springt in die erste Zelle der nächsten Zeile
+- IME-Eingabe (Japanisch, Chinesisch, Koreanisch u. a.) bleibt unberührt — das Bestätigen der Umwandlung wechselt nicht zur nächsten Zelle
+
 ## 1.8.0
 
 - View: pin the first column so it stays visible when scrolling sideways
