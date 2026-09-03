@@ -458,6 +458,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.sortCol = null;
     this.sortDir = null;
     this.pinLastRow = false;
+    this.pinFirstCol = false;
     this.filterComposing = false;
     this.keepFilterFocus = false;
     this.filterCaret = null;
@@ -622,6 +623,58 @@ class TableCsvView extends obsidian.TextFileView {
       } catch (e2) {
         new obsidian.Notice(t('コピーに失敗しました', 'Copy failed', 'Kopieren fehlgeschlagen'));
       }
+    }
+  }
+
+  async exportFiltered() {
+    if (this.mode !== 'view') {
+      new obsidian.Notice(
+        t(
+          '書き出すには閲覧モードに切り替えてください',
+          'Switch to View to export',
+          'Zum Exportieren in den Ansicht-Modus wechseln',
+        ),
+      );
+      return;
+    }
+    if (!this.file) {
+      new obsidian.Notice(
+        t('書き出すファイルがありません', 'No file to export from', 'Keine Datei zum Exportieren'),
+      );
+      return;
+    }
+    var rows = this.rowsForCopy();
+    if (!rows.length) {
+      new obsidian.Notice(
+        t('書き出すものがありません', 'Nothing to export', 'Nichts zu exportieren'),
+      );
+      return;
+    }
+    var suffix = t('-絞り込み', '-filtered', '-gefiltert');
+    var path = uniqueSiblingCsvPath(this.app.vault, this.file, suffix);
+    var body = formatCsvFile(rows, {
+      newline: this.newline,
+      trailingNewline: this.trailingNewline,
+      bom: this.bom,
+      delim: this.delim,
+      quoteAll: this.quoteAll,
+    });
+    try {
+      var file = await this.app.vault.create(path, body);
+      var leaf = this.app.workspace.getLeaf(true);
+      await leaf.openFile(file);
+      var n = Math.max(0, rows.length - 1);
+      new obsidian.Notice(
+        t(
+          n + '行を新しいCSVに書き出しました',
+          'Exported ' + n + ' rows to a new CSV',
+          n + ' Zeilen in eine neue CSV exportiert',
+        ),
+      );
+    } catch (e) {
+      new obsidian.Notice(
+        t('書き出せませんでした', 'Could not export CSV', 'CSV konnte nicht exportiert werden'),
+      );
     }
   }
 
@@ -876,6 +929,7 @@ class TableCsvView extends obsidian.TextFileView {
     el.addClass('table-csv-view');
     el.toggleClass('is-edit', this.mode === 'edit');
     el.toggleClass('is-view', this.mode === 'view');
+    el.toggleClass('is-pin-first-col', this.mode === 'view' && this.pinFirstCol);
     this.syncViewLeafClass();
 
     var toolbar = el.createDiv({ cls: 'table-csv-toolbar' });
@@ -894,6 +948,24 @@ class TableCsvView extends obsidian.TextFileView {
     copyBtn.addEventListener('click', function () {
       self.copyTable();
     });
+
+    if (this.mode === 'view') {
+      var exportBtn = toolbar.createEl('button', {
+        text: t('絞り込みを書き出す', 'Export filtered', 'Filter exportieren'),
+        type: 'button',
+      });
+      exportBtn.setAttribute(
+        'title',
+        t(
+          '見出しと、いま表示している行を新しいCSVにします。元のファイルは変わりません',
+          'Save the header plus currently visible rows as a new CSV. The original file is unchanged',
+          'Kopfzeile und derzeit sichtbare Zeilen als neue CSV speichern. Die Originaldatei bleibt unverändert',
+        ),
+      );
+      exportBtn.addEventListener('click', function () {
+        void self.exportFiltered();
+      });
+    }
 
     var bmcBtn = toolbar.createEl('button', {
       cls: 'table-csv-bmc-btn',
@@ -922,6 +994,26 @@ class TableCsvView extends obsidian.TextFileView {
       );
       pinCheck.addEventListener('change', function () {
         self.pinLastRow = pinCheck.checked;
+        self.render();
+      });
+
+      var pinFirstWrap = toolbar.createDiv({ cls: 'table-csv-pin-first' });
+      var pinFirstLabel = pinFirstWrap.createEl('label');
+      var pinFirstCheck = pinFirstLabel.createEl('input', { type: 'checkbox' });
+      pinFirstCheck.checked = this.pinFirstCol;
+      pinFirstLabel.createSpan({
+        text: t('先頭列を固定', 'Pin first column', 'Erste Spalte anheften'),
+      });
+      pinFirstCheck.setAttribute(
+        'title',
+        t(
+          '横にスクロールしても、左端の列（店舗名など）を画面に残します',
+          'Keep the leftmost column visible when scrolling sideways',
+          'Die linke Spalte beim seitlichen Scrollen sichtbar halten',
+        ),
+      );
+      pinFirstCheck.addEventListener('change', function () {
+        self.pinFirstCol = pinFirstCheck.checked;
         self.render();
       });
 
@@ -1038,6 +1130,7 @@ class TableCsvView extends obsidian.TextFileView {
             },
           });
           thView.toggleClass('is-sorted', self.sortCol === colIndex);
+          thView.toggleClass('is-frozen-col', self.pinFirstCol && colIndex === 0);
           thView.addEventListener('click', function () {
             self.cycleSort(colIndex);
           });
@@ -1058,7 +1151,8 @@ class TableCsvView extends obsidian.TextFileView {
         tr.toggleClass('is-pinned', lastPinnedIndex != null && item.index === lastPinnedIndex);
         for (var i = 0; i < cols; i++) {
           var val = String(item.row[i] == null ? '' : item.row[i]);
-          tr.createEl('td', { text: val, attr: { title: val } });
+          var td = tr.createEl('td', { text: val, attr: { title: val } });
+          td.toggleClass('is-frozen-col', self.pinFirstCol && i === 0);
         }
       });
     }
@@ -1152,6 +1246,21 @@ function joinVaultPath(folderPath, name) {
     return name;
   }
   return folderPath.replace(/\/$/, '') + '/' + name;
+}
+
+function uniqueSiblingCsvPath(vault, file, suffix) {
+  var parent = file && file.parent;
+  var folderPath = !parent || parent.path === '/' ? '' : parent.path;
+  var base = file && file.basename ? file.basename : 'Untitled';
+  var n = 0;
+  while (true) {
+    var name = n === 0 ? base + suffix + '.csv' : base + suffix + ' ' + n + '.csv';
+    var path = joinVaultPath(folderPath, name);
+    if (!vault.getAbstractFileByPath(path)) {
+      return path;
+    }
+    n++;
+  }
 }
 
 function uniqueCsvPath(vault, folderPath) {
