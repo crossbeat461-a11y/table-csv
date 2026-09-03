@@ -29,6 +29,8 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 - **View** mode: text filter to narrow rows (does not change the file)
 - **View** mode: click a column header to sort (asc → desc → clear; does not change the file)
 - **View** mode: optional **Pin last row** for CSVs with a totals row at the bottom (keeps that row out of sort)
+- **View** mode: optional **Pin first column** so the leftmost column stays visible when scrolling sideways
+- **View** mode: **Export filtered** writes the header plus currently visible rows to a new CSV in the same folder (the original file is unchanged)
 - **Edit** mode: change cells, insert/delete rows and columns, then save to the vault
 - **Copy** uses the OS clipboard (tab-separated). Paste into Excel, Notepad, or TextEdit
 - **Paste** (Edit mode): copy a range in Excel (or Word / a text table) and paste with `Ctrl+V` / `Cmd+V`, right-click Paste, or the toolbar. A 10×10 stays 10×10, starting at the selected cell
@@ -41,22 +43,23 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 1. Install **TableCSV** from Community plugins and enable it
 2. Right-click a folder and choose **New CSV**, or run the same from the command palette. You can also open an existing `.csv`
-3. A new file opens in **Edit**. Existing files start in **View**. Type in the filter box to narrow matching rows. Click a column header to sort. Check **Pin last row** when the bottom row is a total you do not want moved
-4. Switch to **Edit** to change an existing file. The filter and sort are cleared so you edit the whole table
-5. Insert or delete the selected row/column with the toolbar. Click a cell to select it. Enter confirms a cell (does not move)
-6. **Copy** puts the table on the system clipboard. In View mode this is the header plus filtered rows; in Edit mode it is the whole table
-7. In **Edit**, select a cell and paste (`Ctrl+V` / `Cmd+V`, right-click Paste, or the toolbar **Paste** button). Excel, Word, and tab-separated text fill right and down from that cell. Extra rows and columns are added if the range is larger. A single copied cell still pastes into the selected cell only
+3. A new file opens in **Edit**. Existing files start in **View**. Type in the filter box to narrow matching rows. Click a column header to sort. Check **Pin last row** when the bottom row is a total you do not want moved. Check **Pin first column** when the table is wide and you want the leftmost column to stay put
+4. **Export filtered** creates a new CSV next to the current file with the header plus the rows you can see (filter, sort, and pin last row). The original file is not written
+5. Switch to **Edit** to change an existing file. The filter and sort are cleared so you edit the whole table
+6. Insert or delete the selected row/column with the toolbar. Click a cell to select it. Enter confirms a cell (does not move)
+7. **Copy** puts the table on the system clipboard. In View mode this is the header plus filtered rows; in Edit mode it is the whole table
+8. In **Edit**, select a cell and paste (`Ctrl+V` / `Cmd+V`, right-click Paste, or the toolbar **Paste** button). Excel, Word, and tab-separated text fill right and down from that cell. Extra rows and columns are added if the range is larger. A single copied cell still pastes into the selected cell only
 
 ### Tips
 
 - Very large CSV files may take longer to render
-- View mode never writes. Edit mode saves to the same `.csv` file in the vault
+- View mode does not change the open file. **Export filtered** creates a new CSV beside it. Edit mode saves to the same `.csv` file in the vault
 - Copy and paste use the system clipboard. They do not require a companion spreadsheet plugin
 - Paste does not open `.xlsx` or `.docx` files. Copy the cells in Excel or Word first, then paste into TableCSV
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.7.0** — Excel-style range paste into the selected cell.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.8.0** — pin the first column; export filtered rows as a new CSV.
 
 ### Author
 
@@ -91,6 +94,8 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 - **View（閲覧）**: 文字で行を絞り込む（ファイルは変更しない）
 - **View（閲覧）**: 列見出しをクリックして並べ替え（昇順 → 降順 → 解除。ファイルは変更しない）
 - **View（閲覧）**: **最下行を固定** — 合計行など最後の1行を並べ替え対象外にできる
+- **View（閲覧）**: **先頭列を固定** — 横スクロールしても左端の列を残す
+- **View（閲覧）**: **絞り込みを書き出す** — 見出しと表示中の行を同じフォルダの新しいCSVにする（元のファイルは変わらない）
 - **Edit（編集）**: セルの変更、行・列の追加・削除。Vault内の同じCSVに保存する
 - **Copy（コピー）**: OSのクリップボードへ（タブ区切り）。Excel、メモ帳、TextEditに貼り付けできる
 - **Paste（貼り付け）**（編集モード）: Excel（または Word / テキストの表）で範囲をコピーし、`Ctrl+V` / `Cmd+V`、右クリックの貼り付け、またはツールバーで貼る。10×10 は 10×10 のまま、選んだセルから入る
@@ -103,22 +108,23 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 1. コミュニティプラグインから **TableCSV** を入れて有効にする
 2. ファイル一覧のフォルダを右クリックして **CSVを新規作成**、またはコマンドパレットで同じ操作。既存の `.csv` を開いてもよい
-3. 新規ファイルは **Edit**。既存ファイルは最初 **View**。フィルター欄に文字を入れると行が絞り込まれる。列見出しをクリックすると並べ替え。**最下行を固定** にチェックすると、合計行など最後の1行は並べ替えされず下に残る
-4. 既存ファイルを直すときは **Edit** に切り替える。フィルターとソートは解除され、表全体を編集する
-5. ツールバーで選択中の行・列を追加・削除する。セルをクリックして選ぶ。Enterは確定のみ（移動しない）
-6. **Copy** で表をクリップボードへ送る。Viewでは見出し＋絞り込み後の行、Editでは表全体
-7. **Edit** でセルを選んで貼る（`Ctrl+V` / `Cmd+V`、右クリックの貼り付け、またはツールバーの **貼り付け**）。Excel・Word・タブ区切りは、そのセルから右下へ入る。範囲が大きければ行・列を足す。1セルだけのコピーは、そのセルだけに入る
+3. 新規ファイルは **Edit**。既存ファイルは最初 **View**。フィルター欄に文字を入れると行が絞り込まれる。列見出しをクリックすると並べ替え。**最下行を固定** にチェックすると、合計行など最後の1行は並べ替えされず下に残る。表が横に長いときは **先頭列を固定**
+4. **絞り込みを書き出す** で、見出しと今見えている行（絞り込み・並べ替え・最下行固定）を同じフォルダの新しいCSVにする。元のファイルは書き込まない
+5. 既存ファイルを直すときは **Edit** に切り替える。フィルターとソートは解除され、表全体を編集する
+6. ツールバーで選択中の行・列を追加・削除する。セルをクリックして選ぶ。Enterは確定のみ（移動しない）
+7. **Copy** で表をクリップボードへ送る。Viewでは見出し＋絞り込み後の行、Editでは表全体
+8. **Edit** でセルを選んで貼る（`Ctrl+V` / `Cmd+V`、右クリックの貼り付け、またはツールバーの **貼り付け**）。Excel・Word・タブ区切りは、そのセルから右下へ入る。範囲が大きければ行・列を足す。1セルだけのコピーは、そのセルだけに入る
 
 ### ヒント
 
 - とても大きいCSVは表示に時間がかかることがある
-- Viewは書き込まない。EditはVault内の同じ `.csv` に保存する
+- Viewは開いているファイルを変えない。**絞り込みを書き出す** は隣に新しいCSVを作る。EditはVault内の同じ `.csv` に保存する
 - コピーと貼り付けはOSのクリップボードを使う。別の表計算プラグインは不要
 - `.xlsx` や `.docx` はそのまま開けない。Excel や Word でセルをコピーしてから TableCSV に貼る
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.7.0** — 選んだセルから Excel と同じ範囲貼り付け。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.8.0** — 先頭列の固定と、絞り込み行の新しいCSVへの書き出し。
 
 ### 作者
 
@@ -156,6 +162,8 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 - Kopfzeile bleibt beim Scrollen sichtbar
 - **Ansicht**: Zeilen filtern und Spalten sortieren (Datei bleibt unverändert)
 - **Ansicht**: optional **Letzte Zeile anheften** für Summenzeilen
+- **Ansicht**: optional **Erste Spalte anheften**, damit sie beim seitlichen Scrollen sichtbar bleibt
+- **Ansicht**: **Filter exportieren** schreibt Kopfzeile und sichtbare Zeilen in eine neue CSV im gleichen Ordner (Original bleibt unverändert)
 - **Bearbeiten**: Zellen, Zeilen und Spalten ändern und in die gleiche Datei speichern
 - Speichern behält Trennzeichen, Anführungszeichen-Stil, Zeilenenden und UTF-8-BOM
 - **Kopieren** / **Einfügen** über die Systemzwischenablage
@@ -164,7 +172,7 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 
 ### Versionshinweise
 
-Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.7.0** — Bereich einfügen wie in Excel.
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.8.0** — erste Spalte anheften; gefilterte Zeilen als neue CSV exportieren.
 
 ### Lizenz
 

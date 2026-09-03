@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.8.0
+
+- View: pin the first column so it stays visible when scrolling sideways
+- View: export the header plus currently visible (filtered/sorted) rows as a new CSV in the same folder; the original file is unchanged
+
+### 日本語
+
+- 閲覧: 先頭列を固定し、横スクロールしても左端の列を残す
+- 閲覧: 見出しと、いま表示している行（絞り込み・並べ替え後）を同じフォルダの新しいCSVに書き出す。元のファイルは変わらない
+
+### Deutsch
+
+- Ansicht: Erste Spalte anheften, damit sie beim seitlichen Scrollen sichtbar bleibt
+- Ansicht: Kopfzeile und derzeit sichtbare (gefilterte/sortierte) Zeilen als neue CSV im gleichen Ordner exportieren; die Originaldatei bleibt unverändert
+
 ## 1.7.0
 
 - Edit: paste a copied range (Excel, Word, or TSV) into the selected cell with Ctrl+V / Cmd+V, right-click Paste, or the toolbar

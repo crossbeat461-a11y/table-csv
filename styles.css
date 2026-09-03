@@ -30,12 +30,14 @@ html body .workspace-leaf-content[data-type="csv"].is-csv-view-mode > .view-cont
   flex-shrink: 0;
 }
 
-.table-csv-pin-last {
+.table-csv-pin-last,
+.table-csv-pin-first {
   font-size: 0.9em;
   white-space: nowrap;
 }
 
-.table-csv-pin-last label {
+.table-csv-pin-last label,
+.table-csv-pin-first label {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -132,6 +134,31 @@ html body .table-csv-view.is-edit .table-csv-scroll::-webkit-scrollbar-thumb {
   background: var(--background-secondary);
   z-index: 1;
   box-shadow: 0 1px 0 var(--background-modifier-border);
+}
+
+html body .table-csv-view.is-view .table-csv-table th.is-frozen-col,
+html body .table-csv-view.is-view .table-csv-table td.is-frozen-col {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--background-primary);
+  box-shadow: 1px 0 0 var(--background-modifier-border);
+}
+
+html body .table-csv-view.is-view .table-csv-table thead th.is-frozen-col {
+  z-index: 3;
+  background: var(--background-secondary);
+  box-shadow:
+    1px 0 0 var(--background-modifier-border),
+    0 1px 0 var(--background-modifier-border);
+}
+
+html body .table-csv-view.is-view .table-csv-table tbody tr:nth-child(even) td.is-frozen-col {
+  background: var(--background-primary-alt);
+}
+
+html body .table-csv-view.is-view .table-csv-table tbody tr.is-pinned td.is-frozen-col {
+  background: var(--background-secondary);
 }
 
 .table-csv-sortable {
