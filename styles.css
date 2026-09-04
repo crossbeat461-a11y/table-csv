@@ -117,6 +117,24 @@ html body .table-csv-view.is-edit .table-csv-scroll::-webkit-scrollbar-thumb {
   font-size: 0.9em;
 }
 
+.table-csv-table.is-sized {
+  table-layout: fixed;
+}
+
+.table-csv-col-gutter {
+  width: 2.5em;
+}
+
+.table-csv-col-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 4;
+}
+
 .table-csv-table th,
 .table-csv-table td {
   border: 1px solid var(--background-modifier-border);
@@ -128,12 +146,18 @@ html body .table-csv-view.is-edit .table-csv-scroll::-webkit-scrollbar-thumb {
   text-overflow: ellipsis;
 }
 
+.table-csv-table.is-sized th,
+.table-csv-table.is-sized td {
+  max-width: none;
+}
+
 .table-csv-table th {
   position: sticky;
   top: 0;
   background: var(--background-secondary);
   z-index: 1;
   box-shadow: 0 1px 0 var(--background-modifier-border);
+  overflow: visible;
 }
 
 html body .table-csv-view.is-view .table-csv-table th.is-frozen-col,

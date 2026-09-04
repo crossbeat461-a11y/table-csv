@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.10.0
+
+- Edit: Undo the last cell change, paste, or row/column insert or delete (`Ctrl+Z` / `Cmd+Z`, toolbar, or command palette)
+- View and Edit: drag a column header edge to set the width; the width is remembered for that file
+
+### 日本語
+
+- 編集: 直前のセル変更・貼り付け・行／列の追加削除を取り消す（`Ctrl+Z` / `Cmd+Z`、ツールバー、またはコマンドパレット）
+- 閲覧・編集: 列見出しの端をドラッグして幅を決める。そのファイルの幅を覚える
+
+### Deutsch
+
+- Bearbeiten: Letzte Zellenänderung, Einfügen oder Zeilen-/Spaltenänderung rückgängig (`Strg+Z` / `Cmd+Z`, Symbolleiste oder Befehlspalette)
+- Ansicht und Bearbeiten: Spaltenbreite am Kopfzeilenrand ziehen; die Breite bleibt für diese Datei erhalten
+
 ## 1.9.1
 
 - Detect semicolon CSV even when decimal commas (`1,5`) outnumber the semicolons
