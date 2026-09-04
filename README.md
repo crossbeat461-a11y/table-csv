@@ -30,8 +30,9 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 - **View** mode: click a column header to sort (asc → desc → clear; does not change the file)
 - **View** mode: optional **Pin last row** for CSVs with a totals row at the bottom (keeps that row out of sort)
 - **View** mode: optional **Pin first column** so the leftmost column stays visible when scrolling sideways
+- **View** and **Edit**: drag a column header edge to set the width; that file keeps the widths
 - **View** mode: **Export filtered** writes the header plus currently visible rows to a new CSV in the same folder (the original file is unchanged)
-- **Edit** mode: change cells, insert/delete rows and columns, then save to the vault. Tab / Enter move between cells without breaking IME composition
+- **Edit** mode: change cells, insert/delete rows and columns, then save to the vault. Tab / Enter move between cells without breaking IME composition. Undo the last edit with `Ctrl+Z` / `Cmd+Z`
 - **Copy** uses the OS clipboard (tab-separated). Paste into Excel, Notepad, or TextEdit
 - **Paste** (Edit mode): copy a range in Excel (or Word / a text table) and paste with `Ctrl+V` / `Cmd+V`, right-click Paste, or the toolbar. A 10×10 stays 10×10, starting at the selected cell
 - Empty rows and columns stay as you left them
@@ -46,7 +47,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 3. A new file opens in **Edit**. Existing files start in **View**. Type in the filter box to narrow matching rows. Click a column header to sort. Check **Pin last row** when the bottom row is a total you do not want moved. Check **Pin first column** when the table is wide and you want the leftmost column to stay put
 4. **Export filtered** creates a new CSV next to the current file with the header plus the rows you can see (filter, sort, and pin last row). The original file is not written
 5. Switch to **Edit** to change an existing file. The filter and sort are cleared so you edit the whole table
-6. Insert or delete the selected row/column with the toolbar. Click a cell to select it. Tab moves right, Enter moves down (Shift reverses). Composition with an IME is left alone
+6. Insert or delete the selected row/column with the toolbar. **Undo** reverses the last edit. Click a cell to select it. Tab moves right, Enter moves down (Shift reverses). Composition with an IME is left alone. Drag the edge of a column header to change its width
 7. **Copy** puts the table on the system clipboard. In View mode this is the header plus filtered rows; in Edit mode it is the whole table
 8. In **Edit**, select a cell and paste (`Ctrl+V` / `Cmd+V`, right-click Paste, or the toolbar **Paste** button). Excel, Word, and tab-separated text fill right and down from that cell. Extra rows and columns are added if the range is larger. A single copied cell still pastes into the selected cell only
 
@@ -60,7 +61,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.9.1** — German/EU semicolon CSV is detected even when decimal commas outnumber semicolons.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.10.0** — undo the last edit; remember column widths per file.
 
 ### Author
 
@@ -96,8 +97,9 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 - **View（閲覧）**: 列見出しをクリックして並べ替え（昇順 → 降順 → 解除。ファイルは変更しない）
 - **View（閲覧）**: **最下行を固定** — 合計行など最後の1行を並べ替え対象外にできる
 - **View（閲覧）**: **先頭列を固定** — 横スクロールしても左端の列を残す
+- **閲覧・編集**: 列見出しの端をドラッグして幅を決める。ファイルごとに覚える
 - **View（閲覧）**: **絞り込みを書き出す** — 見出しと表示中の行を同じフォルダの新しいCSVにする（元のファイルは変わらない）
-- **Edit（編集）**: セルの変更、行・列の追加・削除。Vault内の同じCSVに保存する。`Tab` / `Enter` でセル移動（変換中は動かない）
+- **Edit（編集）**: セルの変更、行・列の追加・削除。Vault内の同じCSVに保存する。`Tab` / `Enter` でセル移動（変換中は動かない）。直前の編集は `Ctrl+Z` / `Cmd+Z` で取り消す
 - **Copy（コピー）**: OSのクリップボードへ（タブ区切り）。Excel、メモ帳、TextEditに貼り付けできる
 - **Paste（貼り付け）**（編集モード）: Excel（または Word / テキストの表）で範囲をコピーし、`Ctrl+V` / `Cmd+V`、右クリックの貼り付け、またはツールバーで貼る。10×10 は 10×10 のまま、選んだセルから入る
 - 空の行・列はそのまま残る
@@ -112,7 +114,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 3. 新規ファイルは **Edit**。既存ファイルは最初 **View**。フィルター欄に文字を入れると行が絞り込まれる。列見出しをクリックすると並べ替え。**最下行を固定** にチェックすると、合計行など最後の1行は並べ替えされず下に残る。表が横に長いときは **先頭列を固定**
 4. **絞り込みを書き出す** で、見出しと今見えている行（絞り込み・並べ替え・最下行固定）を同じフォルダの新しいCSVにする。元のファイルは書き込まない
 5. 既存ファイルを直すときは **Edit** に切り替える。フィルターとソートは解除され、表全体を編集する
-6. ツールバーで選択中の行・列を追加・削除する。セルをクリックして選ぶ。`Tab` で右、`Enter` で下へ進む（`Shift` で逆）。変換中は動かない
+6. ツールバーで選択中の行・列を追加・削除する。**元に戻す** で直前の編集を取り消す。セルをクリックして選ぶ。`Tab` で右、`Enter` で下へ進む（`Shift` で逆）。変換中は動かない。列見出しの端をドラッグすると幅が変わる
 7. **Copy** で表をクリップボードへ送る。Viewでは見出し＋絞り込み後の行、Editでは表全体
 8. **Edit** でセルを選んで貼る（`Ctrl+V` / `Cmd+V`、右クリックの貼り付け、またはツールバーの **貼り付け**）。Excel・Word・タブ区切りは、そのセルから右下へ入る。範囲が大きければ行・列を足す。1セルだけのコピーは、そのセルだけに入る
 
@@ -126,7 +128,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.9.1** — 小数カンマが多くてもドイツ式（`;` 区切り）として読む。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.10.0** — 直前の編集を取り消す。列幅をファイルごとに覚える。
 
 ### 作者
 
@@ -165,8 +167,9 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 - **Ansicht**: Zeilen filtern und Spalten sortieren (Datei bleibt unverändert)
 - **Ansicht**: optional **Letzte Zeile anheften** für Summenzeilen
 - **Ansicht**: optional **Erste Spalte anheften**, damit sie beim seitlichen Scrollen sichtbar bleibt
+- **Ansicht und Bearbeiten**: Spaltenbreite am Kopfzeilenrand ziehen; bleibt pro Datei erhalten
 - **Ansicht**: **Filter exportieren** schreibt Kopfzeile und sichtbare Zeilen in eine neue CSV im gleichen Ordner (Original bleibt unverändert)
-- **Bearbeiten**: Zellen, Zeilen und Spalten ändern und in die gleiche Datei speichern. Tab / Enter wechseln die Zelle, ohne die IME-Eingabe zu stören
+- **Bearbeiten**: Zellen, Zeilen und Spalten ändern und in die gleiche Datei speichern. Tab / Enter wechseln die Zelle, ohne die IME-Eingabe zu stören. Letzte Änderung mit `Strg+Z` / `Cmd+Z` rückgängig
 - Speichern behält Trennzeichen, Anführungszeichen-Stil, Zeilenenden und UTF-8-BOM
 - **Kopieren** / **Einfügen** über die Systemzwischenablage
 - **Einfügen** (Bearbeiten): Bereich in Excel kopieren, Zelle wählen, Strg+V / Cmd+V, Rechtsklick oder Symbolleiste. 10×10 bleibt 10×10, ab der gewählten Zelle
@@ -175,7 +178,7 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 
 ### Versionshinweise
 
-Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.9.1** — Semikolon-CSV wird erkannt, auch wenn Dezimalkommas häufiger sind.
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.10.0** — letzte Bearbeitung rückgängig; Spaltenbreiten merken.
 
 ### Lizenz
 
