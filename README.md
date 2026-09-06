@@ -61,7 +61,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.11.0** — cut or clear a selected cell range.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.11.1** — keep the plugin description within 250 characters.
 
 ### Author
 
@@ -128,7 +128,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.11.0** — 選んだ範囲を切り取る、またはクリアする。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.11.1** — プラグイン説明を 250 文字以内に収める。
 
 ### 作者
 
@@ -178,7 +178,7 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 
 ### Versionshinweise
 
-Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.11.0** — Auswahl ausschneiden oder leeren.
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.11.1** — Plugin-Beschreibung unter 250 Zeichen.
 
 ### Lizenz
 
