@@ -9,13 +9,10 @@ Use **release `1.2.0` or later** (GitHub Actions + artifact attestations).
 3. Commit and push to `main`.
 4. Create and push tag: `git tag 1.2.0 && git push origin 1.2.0`
 5. Wait for [Release workflow](https://github.com/crossbeat461-a11y/table-csv/actions) to finish.
-6. Update the public listing text by hand (version itself is picked up from GitHub):
-   1. Open [community.obsidian.md](https://community.obsidian.md) and sign in with your **Obsidian** account (not only GitHub).
-   2. Connect GitHub if prompted, so you can see TableCSV under **Plugins → Your entries**.
-   3. Open **TableCSV**.
-   4. If 1.2.0 is not listed yet: **⋯ → Check for new releases**.
-   5. Select **Edit listing**.
-   6. Paste Short / Longer description from `LISTING.md`, then **Save**.
+6. After the Release exists, the **agent** pastes Short / Longer description from `LISTING.md` into community.obsidian.md → TableCSV → **Edit listing** → Save. Do not leave this for the human. Version itself is picked up from GitHub.
+7. The **human** only finishes Obsidian **pending** for the new version (not the listing copy).
+
+If Edit listing cannot be completed (no browser session, login missing), stop and report that one blocked step. Do not ask the human to hunt Cursor settings.
 
 ## Expected scan results
 
