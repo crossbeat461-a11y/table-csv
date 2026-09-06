@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.11.1
+
+- Shorten the plugin description so it stays within the 250-character review limit
+
+### 日本語
+
+- プラグイン説明を 250 文字以内に収める（審査対応）
+
+### Deutsch
+
+- Plugin-Beschreibung gekürzt, damit sie die 250-Zeichen-Grenze der Prüfung einhält
+
 ## 1.11.0
 
 - Edit: cut a selected range (`Ctrl+X` / `Cmd+X`, toolbar, or command palette) — copies then clears the cells

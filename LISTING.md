@@ -4,7 +4,7 @@ Paste these values in the developer dashboard.
 
 ## Important (automated review)
 
-- **`manifest.json` → `description` must NOT contain the word `Obsidian`.**
+- **`manifest.json` → `description` must NOT contain the word `Obsidian`.** Keep it at **250 characters or fewer**.
 - **`authorUrl`** must be a GitHub **profile** URL, not the plugin repository.
 - **GitHub Release title** must include the version (e.g. `TableCSV 1.1.0`). CI sets this on tag push.
 - **Release assets** (`main.js`, `manifest.json`, `styles.css`) are published via GitHub Actions with **artifact attestations**.
@@ -12,7 +12,7 @@ Paste these values in the developer dashboard.
 ## Short description
 
 ```
-Open CSV files as tables. Create a new CSV from a folder, view with a filter, pin the last row or first column, resize columns, undo or redo edits, copy, cut, or clear a selected range, edit cells with Tab or Enter, copy or paste, and export filtered rows.
+Open CSV files as tables. Create a new CSV from a folder, view with filter and sort, pin last row or first column, resize columns, undo or redo, copy, cut, or clear a range, edit with Tab or Enter, paste, and export filtered rows.
 ```
 
 ## Longer description (if available)
