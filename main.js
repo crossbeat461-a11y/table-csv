@@ -726,7 +726,29 @@ class TableCsvView extends obsidian.TextFileView {
       if (key === 'c' && !ev.shiftKey && self.hasCellRange()) {
         ev.preventDefault();
         void self.copyTable();
+        return;
       }
+      if (key === 'x' && !ev.shiftKey && self.hasCellRange()) {
+        ev.preventDefault();
+        void self.cutRange();
+        return;
+      }
+    });
+    this.registerDomEvent(this.contentEl, 'keydown', function (ev) {
+      if (self.mode !== 'edit' || ev.ctrlKey || ev.metaKey || ev.altKey) {
+        return;
+      }
+      if (self.cellComposing || isImeKeydown(ev)) {
+        return;
+      }
+      if (ev.key !== 'Delete' && ev.key !== 'Backspace') {
+        return;
+      }
+      if (!self.hasCellRange()) {
+        return;
+      }
+      ev.preventDefault();
+      self.clearSelectedCells();
     });
     this.registerDomEvent(this.contentEl, 'mousemove', function (ev) {
       if (!self.rangeDrag || self.mode !== 'edit') {
@@ -1115,18 +1137,15 @@ class TableCsvView extends obsidian.TextFileView {
     return this.rows;
   }
 
-  async copyTable() {
-    var ranged = this.mode === 'edit' && this.hasCellRange();
-    var rows = this.rowsForCopy();
+  async writeRowsToClipboard(rows, ok, silent) {
     if (!rows.length) {
-      new obsidian.Notice(t('コピーするものがありません', 'Nothing to copy', 'Nichts zu kopieren'));
-      return;
+      if (!silent) {
+        new obsidian.Notice(t('コピーするものがありません', 'Nothing to copy', 'Nichts zu kopieren'));
+      }
+      return false;
     }
     var tsv = serializeTsv(rows);
     var html = rowsToHtmlTable(rows);
-    var ok = ranged
-      ? t('選択範囲をコピーしました', 'Copied selection', 'Auswahl kopiert')
-      : t('表をコピーしました', 'Copied table', 'Tabelle kopiert');
     try {
       if (typeof ClipboardItem !== 'undefined' && navigator.clipboard && navigator.clipboard.write) {
         await navigator.clipboard.write([
@@ -1140,15 +1159,110 @@ class TableCsvView extends obsidian.TextFileView {
       } else {
         fallbackCopyText(tsv);
       }
-      new obsidian.Notice(ok);
+      if (!silent && ok) {
+        new obsidian.Notice(ok);
+      }
+      return true;
     } catch (e) {
       try {
         fallbackCopyText(tsv);
-        new obsidian.Notice(ok);
+        if (!silent && ok) {
+          new obsidian.Notice(ok);
+        }
+        return true;
       } catch (e2) {
         new obsidian.Notice(t('コピーに失敗しました', 'Copy failed', 'Kopieren fehlgeschlagen'));
+        return false;
       }
     }
+  }
+
+  async copyTable() {
+    var ranged = this.mode === 'edit' && this.hasCellRange();
+    var ok = ranged
+      ? t('選択範囲をコピーしました', 'Copied selection', 'Auswahl kopiert')
+      : t('表をコピーしました', 'Copied table', 'Tabelle kopiert');
+    await this.writeRowsToClipboard(this.rowsForCopy(), ok, false);
+  }
+
+  rangeHasContent() {
+    var b = this.rangeBounds();
+    var r;
+    var c;
+    for (r = b.r0; r <= b.r1; r++) {
+      for (c = b.c0; c <= b.c1; c++) {
+        var cell = this.rows[r] && this.rows[r][c];
+        if (String(cell == null ? '' : cell) !== '') {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  clearSelectedCells() {
+    if (this.mode !== 'edit') {
+      new obsidian.Notice(
+        t(
+          'クリアするには編集モードに切り替えてください',
+          'Switch to Edit to clear',
+          'Zum Leeren in den Bearbeiten-Modus wechseln',
+        ),
+      );
+      return false;
+    }
+    if (!this.rows.length || !this.rangeHasContent()) {
+      new obsidian.Notice(t('クリアするものがありません', 'Nothing to clear', 'Nichts zu leeren'));
+      return false;
+    }
+    this.pushUndo();
+    var b = this.rangeBounds();
+    var r;
+    var c;
+    for (r = b.r0; r <= b.r1; r++) {
+      for (c = b.c0; c <= b.c1; c++) {
+        ensureCell(this.rows, r, c);
+        this.rows[r][c] = '';
+      }
+    }
+    this.persist();
+    this.render();
+    new obsidian.Notice(t('選択範囲をクリアしました', 'Cleared selection', 'Auswahl geleert'));
+    return true;
+  }
+
+  async cutRange() {
+    if (this.mode !== 'edit') {
+      new obsidian.Notice(
+        t(
+          '切り取るには編集モードに切り替えてください',
+          'Switch to Edit to cut',
+          'Zum Ausschneiden in den Bearbeiten-Modus wechseln',
+        ),
+      );
+      return;
+    }
+    if (!this.rows.length || !this.rangeHasContent()) {
+      new obsidian.Notice(t('切り取るものがありません', 'Nothing to cut', 'Nichts auszuschneiden'));
+      return;
+    }
+    var copied = await this.writeRowsToClipboard(this.rowsFromRange(), '', true);
+    if (!copied) {
+      return;
+    }
+    this.pushUndo();
+    var b = this.rangeBounds();
+    var r;
+    var c;
+    for (r = b.r0; r <= b.r1; r++) {
+      for (c = b.c0; c <= b.c1; c++) {
+        ensureCell(this.rows, r, c);
+        this.rows[r][c] = '';
+      }
+    }
+    this.persist();
+    this.render();
+    new obsidian.Notice(t('選択範囲を切り取りました', 'Cut selection', 'Auswahl ausgeschnitten'));
   }
 
   async exportFiltered() {
@@ -1627,6 +1741,30 @@ class TableCsvView extends obsidian.TextFileView {
       redoBtn.addEventListener('click', function () {
         self.redoLast();
       });
+      var cutBtn = toolbar.createEl('button', { text: t('切り取り', 'Cut', 'Ausschneiden'), type: 'button' });
+      cutBtn.setAttribute(
+        'title',
+        t(
+          '選んだ範囲をコピーして空にする（Ctrl+X / Cmd+X）',
+          'Copy the selection and clear it (Ctrl+X / Cmd+X)',
+          'Auswahl kopieren und leeren (Strg+X / Cmd+X)',
+        ),
+      );
+      cutBtn.addEventListener('click', function () {
+        void self.cutRange();
+      });
+      var clearBtn = toolbar.createEl('button', { text: t('クリア', 'Clear', 'Leeren'), type: 'button' });
+      clearBtn.setAttribute(
+        'title',
+        t(
+          '選んだ範囲を空にする（Delete）',
+          'Clear the selection (Delete)',
+          'Auswahl leeren (Entf)',
+        ),
+      );
+      clearBtn.addEventListener('click', function () {
+        self.clearSelectedCells();
+      });
       var pasteBtn = toolbar.createEl('button', { text: t('貼り付け', 'Paste', 'Einfügen'), type: 'button' });
       pasteBtn.addEventListener('click', function () {
         void self.pasteTable();
@@ -1859,6 +1997,12 @@ class TableCsvView extends obsidian.TextFileView {
         }
         return;
       }
+      if ((ev.key === 'Delete' || ev.key === 'Backspace') && self.hasCellRange()) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        self.clearSelectedCells();
+        return;
+      }
       if (ev.ctrlKey || ev.metaKey || ev.altKey) {
         return;
       }
@@ -2063,6 +2207,34 @@ class TableCsvPlugin extends obsidian.Plugin {
         }
         if (!checking) {
           view.redoLast();
+        }
+        return true;
+      },
+    });
+    this.addCommand({
+      id: 'cut-selection',
+      name: t('選択範囲を切り取る', 'Cut selection', 'Auswahl ausschneiden'),
+      checkCallback: function (checking) {
+        var view = self.app.workspace.getActiveViewOfType(TableCsvView);
+        if (!view || view.mode !== 'edit' || !view.rows.length || !view.rangeHasContent()) {
+          return false;
+        }
+        if (!checking) {
+          void view.cutRange();
+        }
+        return true;
+      },
+    });
+    this.addCommand({
+      id: 'clear-selection',
+      name: t('選択範囲をクリア', 'Clear selection', 'Auswahl leeren'),
+      checkCallback: function (checking) {
+        var view = self.app.workspace.getActiveViewOfType(TableCsvView);
+        if (!view || view.mode !== 'edit' || !view.rows.length || !view.rangeHasContent()) {
+          return false;
+        }
+        if (!checking) {
+          view.clearSelectedCells();
         }
         return true;
       },
