@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.10.1
+
+- Edit: redo an undone change (`Ctrl+Y` / `Cmd+Shift+Z`, toolbar, or command palette)
+- Edit: drag or Shift-click cells to select a range; Copy and `Ctrl+C` / `Cmd+C` copy that range. With no range, Copy still copies the whole table
+
+### 日本語
+
+- 編集: 取り消した変更をやり直す（`Ctrl+Y` / `Cmd+Shift+Z`、ツールバー、またはコマンドパレット）
+- 編集: ドラッグまたは `Shift`+クリックで範囲を選ぶ。コピーと `Ctrl+C` / `Cmd+C` はその範囲。範囲が無いときは、これまでどおり表全体
+
+### Deutsch
+
+- Bearbeiten: Rückgängig gemachte Änderung wiederholen (`Strg+Y` / `Cmd+Umschalt+Z`, Symbolleiste oder Befehlspalette)
+- Bearbeiten: Zellen ziehen oder mit Umschalt+Klick auswählen; Kopieren und `Strg+C` / `Cmd+C` kopieren die Auswahl. Ohne Auswahl wird weiter die ganze Tabelle kopiert
+
 ## 1.10.0
 
 - Edit: Undo the last cell change, paste, or row/column insert or delete (`Ctrl+Z` / `Cmd+Z`, toolbar, or command palette)

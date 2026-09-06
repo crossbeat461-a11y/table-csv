@@ -638,6 +638,8 @@ class TableCsvView extends obsidian.TextFileView {
     this.rows = [];
     this.selRow = 0;
     this.selCol = 0;
+    this.selEndRow = 0;
+    this.selEndCol = 0;
     this.sortCol = null;
     this.sortDir = null;
     this.pinLastRow = false;
@@ -655,6 +657,8 @@ class TableCsvView extends obsidian.TextFileView {
     this.quoteAll = false;
     this.leafHostEl = null;
     this.undoStack = [];
+    this.redoStack = [];
+    this.rangeDrag = false;
     this.colWidths = [];
     this.cellUndoPushed = false;
     this.resizingCol = false;
@@ -697,17 +701,55 @@ class TableCsvView extends obsidian.TextFileView {
       if (self.mode !== 'edit') {
         return;
       }
-      if (!(ev.ctrlKey || ev.metaKey) || ev.shiftKey || ev.altKey) {
-        return;
-      }
-      if (String(ev.key || '').toLowerCase() !== 'z') {
+      if (!(ev.ctrlKey || ev.metaKey) || ev.altKey) {
         return;
       }
       if (self.cellComposing || isImeKeydown(ev)) {
         return;
       }
-      ev.preventDefault();
-      self.undoLast();
+      var key = String(ev.key || '').toLowerCase();
+      if (key === 'z' && ev.shiftKey) {
+        ev.preventDefault();
+        self.redoLast();
+        return;
+      }
+      if (key === 'z' && !ev.shiftKey) {
+        ev.preventDefault();
+        self.undoLast();
+        return;
+      }
+      if (key === 'y' && !ev.shiftKey) {
+        ev.preventDefault();
+        self.redoLast();
+        return;
+      }
+      if (key === 'c' && !ev.shiftKey && self.hasCellRange()) {
+        ev.preventDefault();
+        void self.copyTable();
+      }
+    });
+    this.registerDomEvent(this.contentEl, 'mousemove', function (ev) {
+      if (!self.rangeDrag || self.mode !== 'edit') {
+        return;
+      }
+      var cell =
+        ev.target && ev.target.closest ? ev.target.closest('[data-row][data-col]') : null;
+      if (!cell || !self.contentEl.contains(cell)) {
+        return;
+      }
+      var r = Number(cell.getAttribute('data-row'));
+      var c = Number(cell.getAttribute('data-col'));
+      if (!isFinite(r) || !isFinite(c)) {
+        return;
+      }
+      if (r === self.selEndRow && c === self.selEndCol) {
+        return;
+      }
+      self.extendSelTo(r, c);
+      self.paintSelection();
+    });
+    this.registerDomEvent(window, 'mouseup', function () {
+      self.rangeDrag = false;
     });
     this.registerDomEvent(this.contentEl, 'paste', function (ev) {
       if (self.mode !== 'edit') {
@@ -764,6 +806,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.rows = parsed.rows;
     this.quoteAll = parsed.quoteAll;
     this.undoStack = [];
+    this.redoStack = [];
     this.cellUndoPushed = false;
     this.loadColWidths();
     if (clear) {
@@ -771,6 +814,8 @@ class TableCsvView extends obsidian.TextFileView {
       this.mode = 'view';
       this.selRow = 0;
       this.selCol = 0;
+      this.selEndRow = 0;
+      this.selEndCol = 0;
       this.sortCol = null;
       this.sortDir = null;
     }
@@ -805,6 +850,8 @@ class TableCsvView extends obsidian.TextFileView {
       widths: this.colWidths.slice(),
       selRow: this.selRow,
       selCol: this.selCol,
+      selEndRow: this.selEndRow,
+      selEndCol: this.selEndCol,
     };
   }
 
@@ -813,14 +860,99 @@ class TableCsvView extends obsidian.TextFileView {
     if (this.undoStack.length > UNDO_LIMIT) {
       this.undoStack.shift();
     }
+    this.redoStack = [];
+  }
+
+  capStack(stack) {
+    if (stack.length > UNDO_LIMIT) {
+      stack.shift();
+    }
   }
 
   undoLast() {
     if (this.mode !== 'edit' || !this.undoStack.length) {
       return;
     }
+    this.redoStack.push(this.snapshotNow());
+    this.capStack(this.redoStack);
     var snap = this.undoStack.pop();
     this.applySnapshot(snap);
+  }
+
+  redoLast() {
+    if (this.mode !== 'edit' || !this.redoStack.length) {
+      return;
+    }
+    this.undoStack.push(this.snapshotNow());
+    this.capStack(this.undoStack);
+    var snap = this.redoStack.pop();
+    this.applySnapshot(snap);
+  }
+
+  collapseSelTo(r, c) {
+    this.selRow = r;
+    this.selCol = c;
+    this.selEndRow = r;
+    this.selEndCol = c;
+  }
+
+  extendSelTo(r, c) {
+    this.selEndRow = r;
+    this.selEndCol = c;
+  }
+
+  rangeBounds() {
+    var rows = this.rows.length;
+    var cols = colCountOf(this.rows);
+    var r0 = Math.min(this.selRow, this.selEndRow);
+    var r1 = Math.max(this.selRow, this.selEndRow);
+    var c0 = Math.min(this.selCol, this.selEndCol);
+    var c1 = Math.max(this.selCol, this.selEndCol);
+    if (rows < 1 || cols < 1) {
+      return { r0: 0, r1: 0, c0: 0, c1: 0 };
+    }
+    r0 = Math.max(0, Math.min(rows - 1, r0));
+    r1 = Math.max(0, Math.min(rows - 1, r1));
+    c0 = Math.max(0, Math.min(cols - 1, c0));
+    c1 = Math.max(0, Math.min(cols - 1, c1));
+    return { r0: r0, r1: r1, c0: c0, c1: c1 };
+  }
+
+  hasCellRange() {
+    var b = this.rangeBounds();
+    return b.r0 !== b.r1 || b.c0 !== b.c1;
+  }
+
+  cellInRange(r, c) {
+    var b = this.rangeBounds();
+    return r >= b.r0 && r <= b.r1 && c >= b.c0 && c <= b.c1;
+  }
+
+  rowsFromRange() {
+    var b = this.rangeBounds();
+    var out = [];
+    var r;
+    var c;
+    for (r = b.r0; r <= b.r1; r++) {
+      var row = [];
+      for (c = b.c0; c <= b.c1; c++) {
+        var cell = this.rows[r] && this.rows[r][c];
+        row.push(String(cell == null ? '' : cell));
+      }
+      out.push(row);
+    }
+    return out;
+  }
+
+  paintSelection() {
+    var self = this;
+    this.contentEl.querySelectorAll('.table-csv-table [data-row][data-col]').forEach(function (n) {
+      var r = Number(n.getAttribute('data-row'));
+      var c = Number(n.getAttribute('data-col'));
+      var inRange = self.cellInRange(r, c);
+      n.toggleClass('is-in-range', inRange);
+      n.toggleClass('is-selected', r === self.selEndRow && c === self.selEndCol);
+    });
   }
 
   applySnapshot(snap) {
@@ -834,8 +966,12 @@ class TableCsvView extends obsidian.TextFileView {
     this.rows = parsed.rows;
     this.quoteAll = parsed.quoteAll;
     this.colWidths = Array.isArray(snap.widths) ? snap.widths.slice() : [];
-    this.selRow = typeof snap.selRow === 'number' ? snap.selRow : 0;
-    this.selCol = typeof snap.selCol === 'number' ? snap.selCol : 0;
+    var sr = typeof snap.selRow === 'number' ? snap.selRow : 0;
+    var sc = typeof snap.selCol === 'number' ? snap.selCol : 0;
+    this.selRow = sr;
+    this.selCol = sc;
+    this.selEndRow = typeof snap.selEndRow === 'number' ? snap.selEndRow : sr;
+    this.selEndCol = typeof snap.selEndCol === 'number' ? snap.selEndCol : sc;
     this.cellUndoPushed = false;
     this.requestSave();
     void this.saveColWidths();
@@ -966,6 +1102,9 @@ class TableCsvView extends obsidian.TextFileView {
   }
 
   rowsForCopy() {
+    if (this.mode === 'edit' && this.hasCellRange()) {
+      return this.rowsFromRange();
+    }
     if (this.mode === 'view') {
       var header = this.rows.length ? [this.rows[0]] : [];
       var body = this.visibleBody().map(function (item) {
@@ -977,6 +1116,7 @@ class TableCsvView extends obsidian.TextFileView {
   }
 
   async copyTable() {
+    var ranged = this.mode === 'edit' && this.hasCellRange();
     var rows = this.rowsForCopy();
     if (!rows.length) {
       new obsidian.Notice(t('コピーするものがありません', 'Nothing to copy', 'Nichts zu kopieren'));
@@ -984,6 +1124,9 @@ class TableCsvView extends obsidian.TextFileView {
     }
     var tsv = serializeTsv(rows);
     var html = rowsToHtmlTable(rows);
+    var ok = ranged
+      ? t('選択範囲をコピーしました', 'Copied selection', 'Auswahl kopiert')
+      : t('表をコピーしました', 'Copied table', 'Tabelle kopiert');
     try {
       if (typeof ClipboardItem !== 'undefined' && navigator.clipboard && navigator.clipboard.write) {
         await navigator.clipboard.write([
@@ -997,11 +1140,11 @@ class TableCsvView extends obsidian.TextFileView {
       } else {
         fallbackCopyText(tsv);
       }
-      new obsidian.Notice(t('表をコピーしました', 'Copied table', 'Tabelle kopiert'));
+      new obsidian.Notice(ok);
     } catch (e) {
       try {
         fallbackCopyText(tsv);
-        new obsidian.Notice(t('表をコピーしました', 'Copied table', 'Tabelle kopiert'));
+        new obsidian.Notice(ok);
       } catch (e2) {
         new obsidian.Notice(t('コピーに失敗しました', 'Copy failed', 'Kopieren fehlgeschlagen'));
       }
@@ -1126,8 +1269,9 @@ class TableCsvView extends obsidian.TextFileView {
   }
 
   pasteAtSelection(block) {
-    var startR = this.rows.length ? Math.max(0, this.selRow) : 0;
-    var startC = this.rows.length ? Math.max(0, this.selCol) : 0;
+    var b = this.rows.length ? this.rangeBounds() : { r0: 0, c0: 0 };
+    var startR = this.rows.length ? Math.max(0, b.r0) : 0;
+    var startC = this.rows.length ? Math.max(0, b.c0) : 0;
     var i;
     var j;
     for (i = 0; i < block.length; i++) {
@@ -1164,7 +1308,7 @@ class TableCsvView extends obsidian.TextFileView {
     }
     this.pushUndo();
     this.rows.splice(at, 0, emptyRow(cols));
-    this.selRow = at;
+    this.collapseSelTo(at, this.selCol);
     this.persist();
     this.render();
   }
@@ -1182,6 +1326,7 @@ class TableCsvView extends obsidian.TextFileView {
         this.selRow = this.rows.length - 1;
       }
     }
+    this.collapseSelTo(this.selRow, this.selCol);
     this.persist();
     this.render();
   }
@@ -1191,7 +1336,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.pushUndo();
     if (!this.rows.length) {
       this.rows.push(['', '']);
-      this.selCol = 1;
+      this.collapseSelTo(0, 1);
       this.colWidths = [0, 0];
     } else {
       this.ensureColWidths(colCountOf(this.rows));
@@ -1202,7 +1347,7 @@ class TableCsvView extends obsidian.TextFileView {
         this.rows[i].splice(at, 0, '');
       }
       this.colWidths.splice(at, 0, 0);
-      this.selCol = at;
+      this.collapseSelTo(this.selRow, at);
     }
     this.persist();
     void this.saveColWidths();
@@ -1221,7 +1366,7 @@ class TableCsvView extends obsidian.TextFileView {
       for (i = 0; i < this.rows.length; i++) {
         this.rows[i] = [''];
       }
-      this.selCol = 0;
+      this.collapseSelTo(this.selRow, 0);
       this.colWidths = [0];
     } else {
       for (i = 0; i < this.rows.length; i++) {
@@ -1233,6 +1378,7 @@ class TableCsvView extends obsidian.TextFileView {
       if (this.selCol >= cols - 1) {
         this.selCol = cols - 2;
       }
+      this.collapseSelTo(this.selRow, this.selCol);
     }
     this.persist();
     void this.saveColWidths();
@@ -1341,6 +1487,14 @@ class TableCsvView extends obsidian.TextFileView {
     });
 
     var copyBtn = toolbar.createEl('button', { text: t('コピー', 'Copy', 'Kopieren'), type: 'button' });
+    copyBtn.setAttribute(
+      'title',
+      t(
+        '範囲を選んでいるときはその範囲、それ以外は表全体',
+        'Copies the selection when a range is selected; otherwise the whole table',
+        'Kopiert die Auswahl, sonst die ganze Tabelle',
+      ),
+    );
     copyBtn.addEventListener('click', function () {
       self.copyTable();
     });
@@ -1460,6 +1614,19 @@ class TableCsvView extends obsidian.TextFileView {
       undoBtn.addEventListener('click', function () {
         self.undoLast();
       });
+      var redoBtn = toolbar.createEl('button', { text: t('やり直す', 'Redo', 'Wiederholen'), type: 'button' });
+      redoBtn.disabled = this.redoStack.length === 0;
+      redoBtn.setAttribute(
+        'title',
+        t(
+          '取り消した編集をやり直す（Ctrl+Y / Cmd+Shift+Z）',
+          'Redo the last undone edit (Ctrl+Y / Cmd+Shift+Z)',
+          'Rückgängig gemachte Bearbeitung wiederholen (Strg+Y / Cmd+Umschalt+Z)',
+        ),
+      );
+      redoBtn.addEventListener('click', function () {
+        self.redoLast();
+      });
       var pasteBtn = toolbar.createEl('button', { text: t('貼り付け', 'Paste', 'Einfügen'), type: 'button' });
       pasteBtn.addEventListener('click', function () {
         void self.pasteTable();
@@ -1521,7 +1688,8 @@ class TableCsvView extends obsidian.TextFileView {
       var headVal = String(rows[0][c] == null ? '' : rows[0][c]);
       if (this.mode === 'edit') {
         var th = hr.createEl('th');
-        th.toggleClass('is-selected', this.selRow === 0 && this.selCol === c);
+        th.toggleClass('is-in-range', this.cellInRange(0, c));
+        th.toggleClass('is-selected', this.selEndRow === 0 && this.selEndCol === c);
         this.bindCell(th, 0, c, headVal, true);
         this.bindColResize(th, c);
       } else {
@@ -1577,14 +1745,24 @@ class TableCsvView extends obsidian.TextFileView {
       text: String(r),
     });
     var self = this;
-    gutter.addEventListener('click', function () {
-      self.selRow = r;
+    gutter.addEventListener('click', function (ev) {
+      var colsNow = colCountOf(self.rows);
+      if (ev.shiftKey) {
+        self.extendSelTo(r, colsNow > 0 ? colsNow - 1 : 0);
+        self.selCol = 0;
+      } else {
+        self.selRow = r;
+        self.selCol = 0;
+        self.selEndRow = r;
+        self.selEndCol = colsNow > 0 ? colsNow - 1 : 0;
+      }
       self.render();
     });
     for (var c = 0; c < cols; c++) {
       var val = String(this.rows[r][c] == null ? '' : this.rows[r][c]);
       var td = tr.createEl('td');
-      td.toggleClass('is-selected', this.selRow === r && this.selCol === c);
+      td.toggleClass('is-in-range', this.cellInRange(r, c));
+      td.toggleClass('is-selected', this.selEndRow === r && this.selEndCol === c);
       this.bindCell(td, r, c, val, false);
     }
   }
@@ -1603,8 +1781,7 @@ class TableCsvView extends obsidian.TextFileView {
   }
 
   focusEditCell(r, c) {
-    this.selRow = r;
-    this.selCol = c;
+    this.collapseSelTo(r, c);
     var next = this.contentEl.querySelector(
       '.table-csv-cell-input[data-row="' + String(r) + '"][data-col="' + String(c) + '"]',
     );
@@ -1621,6 +1798,24 @@ class TableCsvView extends obsidian.TextFileView {
 
   bindCell(host, r, c, val, isHeader) {
     var self = this;
+    host.setAttribute('data-row', String(r));
+    host.setAttribute('data-col', String(c));
+    host.addEventListener('mousedown', function (ev) {
+      if (ev.button !== 0) {
+        return;
+      }
+      if (ev.target && ev.target.closest && ev.target.closest('.table-csv-col-resizer')) {
+        return;
+      }
+      self.rangeDrag = true;
+      if (ev.shiftKey) {
+        ev.preventDefault();
+        self.extendSelTo(r, c);
+      } else {
+        self.collapseSelTo(r, c);
+      }
+      self.paintSelection();
+    });
     var field = host.createEl('input', {
       type: 'text',
       cls: isHeader ? 'table-csv-cell-input is-header' : 'table-csv-cell-input',
@@ -1639,12 +1834,10 @@ class TableCsvView extends obsidian.TextFileView {
     });
     field.addEventListener('focus', function () {
       self.cellUndoPushed = false;
-      self.selRow = r;
-      self.selCol = c;
-      self.contentEl.querySelectorAll('.is-selected').forEach(function (n) {
-        n.removeClass('is-selected');
-      });
-      host.addClass('is-selected');
+      if (!self.rangeDrag) {
+        self.collapseSelTo(r, c);
+      }
+      self.paintSelection();
     });
     field.addEventListener('input', function () {
       if (!self.cellUndoPushed) {
@@ -1856,6 +2049,20 @@ class TableCsvPlugin extends obsidian.Plugin {
         }
         if (!checking) {
           view.undoLast();
+        }
+        return true;
+      },
+    });
+    this.addCommand({
+      id: 'redo-last-edit',
+      name: t('取り消した編集をやり直す', 'Redo last edit', 'Letzte Bearbeitung wiederholen'),
+      checkCallback: function (checking) {
+        var view = self.app.workspace.getActiveViewOfType(TableCsvView);
+        if (!view || view.mode !== 'edit' || !view.redoStack.length) {
+          return false;
+        }
+        if (!checking) {
+          view.redoLast();
         }
         return true;
       },

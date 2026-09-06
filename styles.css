@@ -218,6 +218,15 @@ html body .table-csv-view.is-view .table-csv-table tbody tr.is-pinned td.is-froz
   outline-offset: -2px;
 }
 
+.table-csv-table th.is-in-range,
+.table-csv-table td.is-in-range {
+  background: var(--background-modifier-hover);
+}
+
+.table-csv-table tr:nth-child(even) td.is-in-range {
+  background: var(--background-modifier-hover);
+}
+
 .table-csv-cell-input {
   display: block;
   width: 100%;
