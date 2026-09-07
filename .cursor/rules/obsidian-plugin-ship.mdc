@@ -7,7 +7,7 @@ alwaysApply: true
 
 Mac / Windows で手順は同じ。詳細はワークスペースの `obsidian-plugin-ship.mdc`。このリポジトリでは `SUBMISSION.md` に従う。
 
-エージェント: 実装、タグ、push、Release、`LISTING.md` を Edit listing へ貼る、HP、Overview / Hub、Vault の3ファイル上書き。
+エージェント: 実装、タグ、push、Release、`LISTING.md` を Edit listing へ貼る、HP、Overview / Hub、Vault の3ファイル上書き。短文は 200 文字以内、長文は 1000 文字以内。
 
 人: Obsidian の pending を終わらせる更新だけ。掲載文は貼らない。
 
