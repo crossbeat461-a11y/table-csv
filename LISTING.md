@@ -4,7 +4,8 @@ Paste these values in the developer dashboard.
 
 ## Important (automated review)
 
-- **`manifest.json` → `description` must NOT contain the word `Obsidian`.**
+- **`manifest.json` → `description` must NOT contain the word `Obsidian`.** Keep it at **250 characters or fewer**.
+- **Edit listing** — Short description **200 characters or fewer**. Longer description **1000 characters or fewer** (spaces count). These limits are separate from the 250-character manifest cap.
 - **`authorUrl`** must be a GitHub **profile** URL, not the plugin repository.
 - **GitHub Release title** must include the version (e.g. `TableCSV 1.1.0`). CI sets this on tag push.
 - **Release assets** (`main.js`, `manifest.json`, `styles.css`) are published via GitHub Actions with **artifact attestations**.
@@ -12,18 +13,13 @@ Paste these values in the developer dashboard.
 ## Short description
 
 ```
-Open CSV files as tables. Create a new CSV from a folder, view with a filter, pin the last row or first column, resize columns, undo or redo edits, copy a selected range, edit cells with Tab or Enter, copy or paste, and export filtered rows.
+Open CSV as tables. Create a CSV from a folder. Filter and sort without changing the file. Pin last row or first column. Copy, cut, or clear a range. Paste from Excel. Export filtered rows. Offline.
 ```
 
 ## Longer description (if available)
 
 ```
-TableCSV opens .csv files as tables inside your vault.
-Create a new CSV from a folder (file explorer) or the command palette.
-View mode filters rows without changing the file. You can pin the last row or the first column, and export the visible rows as a new CSV.
-Edit mode updates cells, rows, and columns, then saves. Tab and Enter move between cells without breaking IME composition. Undo reverses the last edit; Redo brings it back. Drag or Shift-click to copy a cell range. Drag a column header edge to set the width.
-Copy puts the current table on the OS clipboard (tab-separated) so you can paste into Excel, Notepad, or TextEdit on Windows and Mac.
-Paste (Edit mode) puts a copied Excel or Word range into the selected cell — a 10×10 stays 10×10. Fully offline — no network requests.
+TableCSV opens .csv files as tables in your vault. Create a blank CSV from a folder or the command palette. New files open in Edit. Existing files start in View. View filters and sorts rows without changing the file. Pin the last row for totals. Pin the first column when the table is wide. Drag a header edge to set column width; the file remembers it. Export filtered writes the header plus visible rows to a new CSV nearby. The original file stays. Edit changes cells, rows, and columns, then saves to the same CSV. Tab and Enter move between cells. IME composition is left alone. Undo and redo the last edit. Drag or Shift-click a range, then copy, cut, or clear it. Clear empties cells; rows and columns stay. Copy uses the OS clipboard for Excel, Notepad, or TextEdit. Cut copies then clears. Paste fills from the selected cell. 10x10 stays 10x10. Saving keeps delimiter, quoting, line endings, and UTF-8 BOM. German semicolon CSV stays intact. Fully offline. Free, MIT. Author: K-Tech Studio.
 ```
 
 ## Suggested categories / tags

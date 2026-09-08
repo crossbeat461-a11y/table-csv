@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.11.1
+
+- Shorten the plugin description so it stays within the 250-character review limit
+
+### 日本語
+
+- プラグイン説明を 250 文字以内に収める（審査対応）
+
+### Deutsch
+
+- Plugin-Beschreibung gekürzt, damit sie die 250-Zeichen-Grenze der Prüfung einhält
+
+## 1.11.0
+
+- Edit: cut a selected range (`Ctrl+X` / `Cmd+X`, toolbar, or command palette) — copies then clears the cells
+- Edit: clear a selected range (`Delete` / `Backspace`, toolbar, or command palette). Rows and columns stay. Undo brings the values back
+
+### 日本語
+
+- 編集: 選んだ範囲を切り取る（`Ctrl+X` / `Cmd+X`、ツールバー、またはコマンドパレット）。コピーしたあと、セルを空にする
+- 編集: 選んだ範囲をクリアする（`Delete` / `Backspace`、ツールバー、またはコマンドパレット）。行と列は残る。元に戻すで値が戻る
+
+### Deutsch
+
+- Bearbeiten: Auswahl ausschneiden (`Strg+X` / `Cmd+X`, Symbolleiste oder Befehlspalette) — kopiert und leert die Zellen
+- Bearbeiten: Auswahl leeren (`Entf` / `Rücktaste`, Symbolleiste oder Befehlspalette). Zeilen und Spalten bleiben. Rückgängig stellt die Werte wieder her
+
 ## 1.10.1
 
 - Edit: redo an undone change (`Ctrl+Y` / `Cmd+Shift+Z`, toolbar, or command palette)
