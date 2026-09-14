@@ -177,7 +177,7 @@ html body .table-csv-view.is-view .table-csv-table thead th.is-frozen-col {
     0 1px 0 var(--background-modifier-border);
 }
 
-html body .table-csv-view.is-view .table-csv-table tbody tr:nth-child(even) td.is-frozen-col {
+html body .table-csv-view.is-view .table-csv-table tbody tr.is-even td.is-frozen-col {
   background: var(--background-primary-alt);
 }
 
@@ -198,7 +198,16 @@ html body .table-csv-view.is-view .table-csv-table tbody tr.is-pinned td.is-froz
   color: var(--text-accent);
 }
 
-.table-csv-table tr:nth-child(even) td {
+.table-csv-spacer,
+.table-csv-spacer-cell {
+  padding: 0;
+  border: none;
+  line-height: 0;
+  font-size: 0;
+  background: transparent;
+}
+
+.table-csv-table tr.is-even td {
   background: var(--background-primary-alt);
 }
 
@@ -223,7 +232,7 @@ html body .table-csv-view.is-view .table-csv-table tbody tr.is-pinned td.is-froz
   background: var(--background-modifier-hover);
 }
 
-.table-csv-table tr:nth-child(even) td.is-in-range {
+.table-csv-table tr.is-even td.is-in-range {
   background: var(--background-modifier-hover);
 }
 

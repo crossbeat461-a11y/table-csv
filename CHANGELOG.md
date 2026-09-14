@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.12.0
+
+- View and Edit: draw on-screen rows first. The rest wait until you scroll. Filter, sort, copy, and export still use the full table
+
+### 日本語
+
+- 閲覧・編集: 画面に見えている行から描く。残りはスクロールしたときに出る。絞り込み・並べ替え・コピー・書き出しは表全体を対象にする
+
+### Deutsch
+
+- Ansicht und Bearbeiten: Zuerst die sichtbaren Zeilen zeichnen. Der Rest folgt beim Scrollen. Filter, Sortierung, Kopieren und Export nutzen weiter die ganze Tabelle
+
 ## 1.11.1
 
 - Shorten the plugin description so it stays within the 250-character review limit

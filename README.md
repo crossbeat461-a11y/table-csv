@@ -38,6 +38,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 - Empty rows and columns stay as you left them
 - Saving keeps the file's delimiter, quoting style, line endings, and UTF-8 BOM
 - UI follows the Obsidian language (Japanese, English, or German)
+- Large files draw the rows on screen; the rest wait until you scroll
 - Works fully offline (no network requests)
 
 ### How to use
@@ -53,7 +54,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 ### Tips
 
-- Very large CSV files may take longer to render
+- Large CSVs draw the rows on screen; the rest wait until you scroll
 - View mode does not change the open file. **Export filtered** creates a new CSV beside it. Edit mode saves to the same `.csv` file in the vault
 - Copy and paste use the system clipboard. They do not require a companion spreadsheet plugin
 - Paste does not open `.xlsx` or `.docx` files. Copy the cells in Excel or Word first, then paste into TableCSV
@@ -61,7 +62,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.11.1** — keep the plugin description within 250 characters.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.12.0** — large files draw on-screen rows first.
 
 ### Author
 
@@ -105,6 +106,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 - 空の行・列はそのまま残る
 - 保存時に区切り文字・引用符の付け方・改行・UTF-8 BOM を維持
 - UI は Obsidian の言語設定に従う（日本語・英語・ドイツ語）
+- 大きいファイルは、画面に見えている行から描く。残りはスクロールしたときに出る
 - 完全オフライン（通信しない）
 
 ### 使い方
@@ -120,7 +122,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 ### ヒント
 
-- とても大きいCSVは表示に時間がかかることがある
+- 大きいCSVは、画面に見えている行から描く。残りはスクロールしたときに出る
 - Viewは開いているファイルを変えない。**絞り込みを書き出す** は隣に新しいCSVを作る。EditはVault内の同じ `.csv` に保存する
 - コピーと貼り付けはOSのクリップボードを使う。別の表計算プラグインは不要
 - `.xlsx` や `.docx` はそのまま開けない。Excel や Word でセルをコピーしてから TableCSV に貼る
@@ -128,7 +130,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.11.1** — プラグイン説明を 250 文字以内に収める。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.12.0** — 大きいファイルは見えている行から描く。
 
 ### 作者
 
@@ -173,12 +175,13 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 - Speichern behält Trennzeichen, Anführungszeichen-Stil, Zeilenenden und UTF-8-BOM
 - **Kopieren** / **Einfügen** über die Systemzwischenablage
 - **Einfügen** (Bearbeiten): Bereich in Excel kopieren, Zelle wählen, Strg+V / Cmd+V, Rechtsklick oder Symbolleiste. 10×10 bleibt 10×10, ab der gewählten Zelle
+- Große Dateien zeichnen die sichtbaren Zeilen; der Rest folgt beim Scrollen
 - Vollständig offline
 - Excel in DE/EU nutzt `;`. TableCSV behält das Trennzeichen. `1,5` bleibt eine Zelle
 
 ### Versionshinweise
 
-Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.11.1** — Plugin-Beschreibung unter 250 Zeichen.
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.12.0** — große Dateien zeichnen zuerst die sichtbaren Zeilen.
 
 ### Lizenz
 
