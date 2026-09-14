@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.12.1
+
+- Fix vertical scrolling for large files: row height lives outside the table, so the scrollbar can move
+
+### 日本語
+
+- 大きいファイルの縦スクロールを修正。行の高さは表の外で確保し、スライダーが動くようにする
+
+### Deutsch
+
+- Vertikales Scrollen großer Dateien korrigiert: die Zeilenhöhe liegt außerhalb der Tabelle, damit die Leiste greift
+
 ## 1.12.0
 
 - View and Edit: draw on-screen rows first. The rest wait until you scroll. Filter, sort, copy, and export still use the full table

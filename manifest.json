@@ -1,7 +1,7 @@
 {
   "id": "table-csv",
   "name": "TableCSV",
-  "version": "1.12.0",
+  "version": "1.12.1",
   "minAppVersion": "1.8.7",
   "description": "Open CSV files as tables. Create a CSV from a folder. Filter and sort without rewriting the file. Pin last row or first column. Resize columns. Copy, cut, clear, undo, redo, and paste. Tab or Enter between cells. Large files draw on-screen rows only.",
   "author": "K-Tech Studio",
