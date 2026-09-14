@@ -3,6 +3,33 @@
 var obsidian = require('obsidian');
 
 var VIEW_TYPE = 'csv';
+var ROW_OVERSCAN = 12;
+var DEFAULT_ROW_PX = 29;
+
+function windowSlice(count, scrollTop, viewportH, rowH, overscan) {
+  if (count <= 0) {
+    return { start: 0, end: 0 };
+  }
+  var h = rowH > 0 ? rowH : DEFAULT_ROW_PX;
+  var top = scrollTop > 0 ? scrollTop : 0;
+  var view = viewportH > 0 ? viewportH : h * 20;
+  var start = Math.floor(top / h) - overscan;
+  if (start < 0) {
+    start = 0;
+  }
+  var vis = Math.ceil(view / h) + overscan * 2;
+  if (vis < 1) {
+    vis = 1;
+  }
+  var end = start + vis;
+  if (end > count) {
+    end = count;
+  }
+  if (start > end) {
+    start = Math.max(0, end - vis);
+  }
+  return { start: start, end: end };
+}
 
 function needsQuote(s, delim) {
   var d = delim || ',';
@@ -663,6 +690,13 @@ class TableCsvView extends obsidian.TextFileView {
     this.cellUndoPushed = false;
     this.resizingCol = false;
     this.skipSortClick = false;
+    this.scrollEl = null;
+    this.tbodyEl = null;
+    this.viewBody = [];
+    this.rowHeightPx = DEFAULT_ROW_PX;
+    this.scrollPaintQueued = 0;
+    this.savedScrollTop = 0;
+    this.savedScrollLeft = 0;
   }
 
   syncViewLeafClass() {
@@ -689,6 +723,10 @@ class TableCsvView extends obsidian.TextFileView {
         if (self.imeEnterTimer) {
           window.clearTimeout(self.imeEnterTimer);
           self.imeEnterTimer = null;
+        }
+        if (self.scrollPaintQueued) {
+          window.cancelAnimationFrame(self.scrollPaintQueued);
+          self.scrollPaintQueued = 0;
         }
         if (self.leafHostEl) {
           self.leafHostEl.removeClass('is-csv-view-mode');
@@ -773,6 +811,19 @@ class TableCsvView extends obsidian.TextFileView {
     this.registerDomEvent(window, 'mouseup', function () {
       self.rangeDrag = false;
     });
+    this.registerDomEvent(
+      this.contentEl,
+      'scroll',
+      function (ev) {
+        if (!self.scrollEl || ev.target !== self.scrollEl) {
+          return;
+        }
+        self.savedScrollTop = self.scrollEl.scrollTop;
+        self.savedScrollLeft = self.scrollEl.scrollLeft;
+        self.queuePaintRows();
+      },
+      true,
+    );
     this.registerDomEvent(this.contentEl, 'paste', function (ev) {
       if (self.mode !== 'edit') {
         return;
@@ -840,6 +891,8 @@ class TableCsvView extends obsidian.TextFileView {
       this.selEndCol = 0;
       this.sortCol = null;
       this.sortDir = null;
+      this.savedScrollTop = 0;
+      this.savedScrollLeft = 0;
     }
     this.render();
   }
@@ -854,6 +907,9 @@ class TableCsvView extends obsidian.TextFileView {
     this.bom = false;
     this.delim = defaultDelimiter();
     this.quoteAll = false;
+    this.scrollEl = null;
+    this.tbodyEl = null;
+    this.viewBody = [];
     this.contentEl.empty();
   }
 
@@ -1568,6 +1624,7 @@ class TableCsvView extends obsidian.TextFileView {
       this.sortCol = col;
       this.sortDir = 'asc';
     }
+    this.savedScrollTop = 0;
     this.render();
   }
 
@@ -1575,7 +1632,154 @@ class TableCsvView extends obsidian.TextFileView {
     this.filter = input.value || '';
     this.filterCaret = input.selectionStart;
     this.keepFilterFocus = true;
+    this.savedScrollTop = 0;
     this.render();
+  }
+
+  queuePaintRows() {
+    if (this.scrollPaintQueued) {
+      return;
+    }
+    var self = this;
+    this.scrollPaintQueued = window.requestAnimationFrame(function () {
+      self.scrollPaintQueued = 0;
+      if (self.cellComposing) {
+        return;
+      }
+      self.paintRows();
+    });
+  }
+
+  addSpacerRow(tbody, cols, extra, px) {
+    if (px <= 0) {
+      return;
+    }
+    var tr = tbody.createEl('tr', { cls: 'table-csv-spacer' });
+    tr.createEl('td', {
+      cls: 'table-csv-spacer-cell',
+      attr: {
+        colspan: String(cols + extra),
+        height: String(px),
+      },
+    });
+  }
+
+  captureRowHeight() {
+    var tbody = this.tbodyEl;
+    if (!tbody) {
+      return;
+    }
+    var tr = tbody.querySelector('tr.table-csv-data-row');
+    if (!tr) {
+      return;
+    }
+    var h = Math.round(tr.getBoundingClientRect().height);
+    if (h >= 8) {
+      this.rowHeightPx = h;
+    }
+  }
+
+  scrollEditRowIntoView(r) {
+    var scroll = this.scrollEl;
+    if (!scroll || r < 1) {
+      return;
+    }
+    var h = this.rowHeightPx > 0 ? this.rowHeightPx : DEFAULT_ROW_PX;
+    var idx = r - 1;
+    var top = idx * h;
+    var headerH = 32;
+    var viewH = Math.max(h, scroll.clientHeight - headerH);
+    if (top < scroll.scrollTop) {
+      scroll.scrollTop = top;
+    } else if (top + h > scroll.scrollTop + viewH) {
+      scroll.scrollTop = top + h - viewH;
+    }
+    this.savedScrollTop = scroll.scrollTop;
+    this.savedScrollLeft = scroll.scrollLeft;
+  }
+
+  paintViewWindow(tbody, cols) {
+    var body = this.viewBody || [];
+    var count = body.length;
+    var scroll = this.scrollEl;
+    var rowH = this.rowHeightPx > 0 ? this.rowHeightPx : DEFAULT_ROW_PX;
+    var slice = windowSlice(
+      count,
+      scroll ? scroll.scrollTop : 0,
+      scroll ? scroll.clientHeight : 400,
+      rowH,
+      ROW_OVERSCAN,
+    );
+    var start = slice.start;
+    var end = slice.end;
+    var lastPinnedIndex = this.pinLastRow && this.rows.length > 1 ? this.rows.length - 1 : null;
+    this.addSpacerRow(tbody, cols, 0, start * rowH);
+    var i;
+    for (i = start; i < end; i++) {
+      var item = body[i];
+      var tr = tbody.createEl('tr', { cls: 'table-csv-data-row' });
+      if (i % 2 === 1) {
+        tr.addClass('is-even');
+      }
+      tr.toggleClass('is-pinned', lastPinnedIndex != null && item.index === lastPinnedIndex);
+      var c;
+      for (c = 0; c < cols; c++) {
+        var val = String(item.row[c] == null ? '' : item.row[c]);
+        var td = tr.createEl('td', { text: val, attr: { title: val } });
+        td.toggleClass('is-frozen-col', this.pinFirstCol && c === 0);
+      }
+    }
+    this.addSpacerRow(tbody, cols, 0, (count - end) * rowH);
+  }
+
+  paintEditWindow(tbody, cols) {
+    var count = Math.max(0, this.rows.length - 1);
+    var scroll = this.scrollEl;
+    var rowH = this.rowHeightPx > 0 ? this.rowHeightPx : DEFAULT_ROW_PX;
+    var slice = windowSlice(
+      count,
+      scroll ? scroll.scrollTop : 0,
+      scroll ? scroll.clientHeight : 400,
+      rowH,
+      ROW_OVERSCAN,
+    );
+    var start = slice.start;
+    var end = slice.end;
+    if (this.selRow >= 1 && count > 0) {
+      var idx = this.selRow - 1;
+      if (idx >= count) {
+        idx = count - 1;
+      }
+      if (idx < start || idx >= end) {
+        var span = Math.max(1, end - start);
+        start = Math.max(0, idx - Math.floor(span / 4));
+        end = Math.min(count, start + span);
+        start = Math.max(0, end - span);
+      }
+    }
+    this.addSpacerRow(tbody, cols, 1, start * rowH);
+    var r;
+    for (r = start + 1; r < end + 1; r++) {
+      this.renderEditRow(tbody, r, cols);
+    }
+    this.addSpacerRow(tbody, cols, 1, (count - end) * rowH);
+  }
+
+  paintRows() {
+    var tbody = this.tbodyEl;
+    if (!tbody) {
+      return;
+    }
+    var cols = this.rows.length ? colCountOf(this.rows) : 0;
+    tbody.empty();
+    if (!cols) {
+      return;
+    }
+    if (this.mode === 'edit') {
+      this.paintEditWindow(tbody, cols);
+    } else {
+      this.paintViewWindow(tbody, cols);
+    }
   }
 
   render() {
@@ -1857,27 +2061,27 @@ class TableCsvView extends obsidian.TextFileView {
     }
 
     var tbody = table.createEl('tbody');
-    if (this.mode === 'edit') {
-      for (var r = 1; r < rows.length; r++) {
-        this.renderEditRow(tbody, r, cols);
-      }
-    } else {
-      var lastPinnedIndex =
-        self.pinLastRow && rows.length > 1 ? rows.length - 1 : null;
-      body.forEach(function (item) {
-        var tr = tbody.createEl('tr');
-        tr.toggleClass('is-pinned', lastPinnedIndex != null && item.index === lastPinnedIndex);
-        for (var i = 0; i < cols; i++) {
-          var val = String(item.row[i] == null ? '' : item.row[i]);
-          var td = tr.createEl('td', { text: val, attr: { title: val } });
-          td.toggleClass('is-frozen-col', self.pinFirstCol && i === 0);
-        }
-      });
+    this.viewBody = this.mode === 'view' ? body : [];
+    this.scrollEl = scroll;
+    this.tbodyEl = tbody;
+    this.paintRows();
+    var prevH = this.rowHeightPx;
+    this.captureRowHeight();
+    if (this.rowHeightPx !== prevH) {
+      this.paintRows();
+    }
+    if (this.savedScrollTop > 0 || this.savedScrollLeft > 0) {
+      scroll.scrollTop = this.savedScrollTop;
+      scroll.scrollLeft = this.savedScrollLeft;
+      this.paintRows();
     }
   }
 
   renderEditRow(tbody, r, cols) {
-    var tr = tbody.createEl('tr');
+    var tr = tbody.createEl('tr', { cls: 'table-csv-data-row' });
+    if ((r - 1) % 2 === 1) {
+      tr.addClass('is-even');
+    }
     var gutter = tr.createEl('th', {
       cls: 'table-csv-gutter',
       text: String(r),
@@ -1915,11 +2119,16 @@ class TableCsvView extends obsidian.TextFileView {
     this.imeEnterTimer = window.setTimeout(function () {
       self.ignoreEnterAfterIme = false;
       self.imeEnterTimer = null;
+      self.queuePaintRows();
     }, 50);
   }
 
   focusEditCell(r, c) {
     this.collapseSelTo(r, c);
+    if (r >= 1) {
+      this.scrollEditRowIntoView(r);
+      this.paintRows();
+    }
     var next = this.contentEl.querySelector(
       '.table-csv-cell-input[data-row="' + String(r) + '"][data-col="' + String(c) + '"]',
     );
