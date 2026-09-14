@@ -62,7 +62,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.12.0** — large files draw on-screen rows first.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.12.1** — large files draw on-screen rows; the scrollbar moves.
 
 ### Author
 
@@ -130,7 +130,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.12.0** — 大きいファイルは見えている行から描く。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.12.1** — 大きいファイルは見えている行から描く。スライダーが動く。
 
 ### 作者
 
@@ -181,7 +181,7 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 
 ### Versionshinweise
 
-Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.12.0** — große Dateien zeichnen zuerst die sichtbaren Zeilen.
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.12.1** — große Dateien zeichnen sichtbare Zeilen; die Scrollleiste greift.
 
 ### Lizenz
 

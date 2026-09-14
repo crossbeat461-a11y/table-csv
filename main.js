@@ -697,6 +697,10 @@ class TableCsvView extends obsidian.TextFileView {
     this.scrollPaintQueued = 0;
     this.savedScrollTop = 0;
     this.savedScrollLeft = 0;
+    this.headWrapEl = null;
+    this.headTableEl = null;
+    this.sizerEl = null;
+    this.bodyTableEl = null;
   }
 
   syncViewLeafClass() {
@@ -820,6 +824,9 @@ class TableCsvView extends obsidian.TextFileView {
         }
         self.savedScrollTop = self.scrollEl.scrollTop;
         self.savedScrollLeft = self.scrollEl.scrollLeft;
+        if (self.headWrapEl) {
+          self.headWrapEl.scrollLeft = self.scrollEl.scrollLeft;
+        }
         self.queuePaintRows();
       },
       true,
@@ -910,6 +917,10 @@ class TableCsvView extends obsidian.TextFileView {
     this.scrollEl = null;
     this.tbodyEl = null;
     this.viewBody = [];
+    this.headWrapEl = null;
+    this.headTableEl = null;
+    this.sizerEl = null;
+    this.bodyTableEl = null;
     this.contentEl.empty();
   }
 
@@ -1166,16 +1177,17 @@ class TableCsvView extends obsidian.TextFileView {
   }
 
   applyLiveColWidth(colIndex, px) {
-    var table = this.contentEl.querySelector('.table-csv-table');
-    if (!table) {
-      return;
-    }
-    table.addClass('is-sized');
-    var nodes = table.querySelectorAll('colgroup col');
+    var tables = this.contentEl.querySelectorAll('.table-csv-table');
     var offset = this.mode === 'edit' ? 1 : 0;
-    var el = nodes[offset + colIndex];
-    if (el) {
-      el.setAttribute('width', String(px));
+    var t;
+    for (t = 0; t < tables.length; t++) {
+      var table = tables[t];
+      table.addClass('is-sized');
+      var nodes = table.querySelectorAll('colgroup col');
+      var el = nodes[offset + colIndex];
+      if (el) {
+        el.setAttribute('width', String(px));
+      }
     }
   }
 
@@ -1650,18 +1662,20 @@ class TableCsvView extends obsidian.TextFileView {
     });
   }
 
-  addSpacerRow(tbody, cols, extra, px) {
-    if (px <= 0) {
+  setVirtHeight(px) {
+    if (!this.sizerEl) {
       return;
     }
-    var tr = tbody.createEl('tr', { cls: 'table-csv-spacer' });
-    tr.createEl('td', {
-      cls: 'table-csv-spacer-cell',
-      attr: {
-        colspan: String(cols + extra),
-        height: String(px),
-      },
-    });
+    var h = px > 0 ? Math.round(px) : 0;
+    this.sizerEl.setAttribute('style', 'height:' + String(h) + 'px');
+  }
+
+  setBodyShift(px) {
+    if (!this.bodyTableEl) {
+      return;
+    }
+    var y = px > 0 ? Math.round(px) : 0;
+    this.bodyTableEl.setAttribute('style', 'transform:translateY(' + String(y) + 'px)');
   }
 
   captureRowHeight() {
@@ -1687,8 +1701,7 @@ class TableCsvView extends obsidian.TextFileView {
     var h = this.rowHeightPx > 0 ? this.rowHeightPx : DEFAULT_ROW_PX;
     var idx = r - 1;
     var top = idx * h;
-    var headerH = 32;
-    var viewH = Math.max(h, scroll.clientHeight - headerH);
+    var viewH = Math.max(h, scroll.clientHeight);
     if (top < scroll.scrollTop) {
       scroll.scrollTop = top;
     } else if (top + h > scroll.scrollTop + viewH) {
@@ -1698,25 +1711,15 @@ class TableCsvView extends obsidian.TextFileView {
     this.savedScrollLeft = scroll.scrollLeft;
   }
 
-  paintViewWindow(tbody, cols) {
+  paintViewRows(tbody, cols, start, end) {
     var body = this.viewBody || [];
-    var count = body.length;
-    var scroll = this.scrollEl;
-    var rowH = this.rowHeightPx > 0 ? this.rowHeightPx : DEFAULT_ROW_PX;
-    var slice = windowSlice(
-      count,
-      scroll ? scroll.scrollTop : 0,
-      scroll ? scroll.clientHeight : 400,
-      rowH,
-      ROW_OVERSCAN,
-    );
-    var start = slice.start;
-    var end = slice.end;
     var lastPinnedIndex = this.pinLastRow && this.rows.length > 1 ? this.rows.length - 1 : null;
-    this.addSpacerRow(tbody, cols, 0, start * rowH);
     var i;
     for (i = start; i < end; i++) {
       var item = body[i];
+      if (!item) {
+        continue;
+      }
       var tr = tbody.createEl('tr', { cls: 'table-csv-data-row' });
       if (i % 2 === 1) {
         tr.addClass('is-even');
@@ -1729,23 +1732,30 @@ class TableCsvView extends obsidian.TextFileView {
         td.toggleClass('is-frozen-col', this.pinFirstCol && c === 0);
       }
     }
-    this.addSpacerRow(tbody, cols, 0, (count - end) * rowH);
   }
 
-  paintEditWindow(tbody, cols) {
-    var count = Math.max(0, this.rows.length - 1);
+  paintEditRows(tbody, cols, start, end) {
+    var r;
+    for (r = start + 1; r < end + 1; r++) {
+      this.renderEditRow(tbody, r, cols);
+    }
+  }
+
+  paintRows() {
+    var tbody = this.tbodyEl;
     var scroll = this.scrollEl;
+    if (!tbody || !scroll) {
+      return;
+    }
+    var cols = this.rows.length ? colCountOf(this.rows) : 0;
+    var count =
+      this.mode === 'edit' ? Math.max(0, this.rows.length - 1) : (this.viewBody || []).length;
     var rowH = this.rowHeightPx > 0 ? this.rowHeightPx : DEFAULT_ROW_PX;
-    var slice = windowSlice(
-      count,
-      scroll ? scroll.scrollTop : 0,
-      scroll ? scroll.clientHeight : 400,
-      rowH,
-      ROW_OVERSCAN,
-    );
+    this.setVirtHeight(count * rowH);
+    var slice = windowSlice(count, scroll.scrollTop, scroll.clientHeight, rowH, ROW_OVERSCAN);
     var start = slice.start;
     var end = slice.end;
-    if (this.selRow >= 1 && count > 0) {
+    if (this.mode === 'edit' && this.selRow >= 1 && count > 0) {
       var idx = this.selRow - 1;
       if (idx >= count) {
         idx = count - 1;
@@ -1757,28 +1767,21 @@ class TableCsvView extends obsidian.TextFileView {
         start = Math.max(0, end - span);
       }
     }
-    this.addSpacerRow(tbody, cols, 1, start * rowH);
-    var r;
-    for (r = start + 1; r < end + 1; r++) {
-      this.renderEditRow(tbody, r, cols);
-    }
-    this.addSpacerRow(tbody, cols, 1, (count - end) * rowH);
-  }
-
-  paintRows() {
-    var tbody = this.tbodyEl;
-    if (!tbody) {
-      return;
-    }
-    var cols = this.rows.length ? colCountOf(this.rows) : 0;
+    this.setBodyShift(start * rowH);
     tbody.empty();
-    if (!cols) {
+    if (!cols || count <= 0) {
       return;
     }
     if (this.mode === 'edit') {
-      this.paintEditWindow(tbody, cols);
+      this.paintEditRows(tbody, cols, start, end);
     } else {
-      this.paintViewWindow(tbody, cols);
+      this.paintViewRows(tbody, cols, start, end);
+    }
+    if (this.bodyTableEl && this.headTableEl) {
+      var bw = Math.ceil(this.bodyTableEl.getBoundingClientRect().width);
+      if (bw > 0) {
+        this.headTableEl.setAttribute('width', String(bw));
+      }
     }
   }
 
@@ -2016,11 +2019,11 @@ class TableCsvView extends obsidian.TextFileView {
       return;
     }
 
-    var scroll = el.createDiv({ cls: 'table-csv-scroll' });
-    var table = scroll.createEl('table', { cls: 'table-csv-table' });
+    var headWrap = el.createDiv({ cls: 'table-csv-head-wrap' });
+    var headTable = headWrap.createEl('table', { cls: 'table-csv-table table-csv-head-table' });
     this.ensureColWidths(cols);
-    this.applyColgroup(table, cols);
-    var thead = table.createEl('thead');
+    this.applyColgroup(headTable, cols);
+    var thead = headTable.createEl('thead');
     var hr = thead.createEl('tr');
     if (this.mode === 'edit') {
       hr.createEl('th', { cls: 'table-csv-gutter', text: '' });
@@ -2060,9 +2063,17 @@ class TableCsvView extends obsidian.TextFileView {
       }
     }
 
-    var tbody = table.createEl('tbody');
+    var scroll = el.createDiv({ cls: 'table-csv-scroll' });
+    var sizer = scroll.createDiv({ cls: 'table-csv-virt-sizer' });
+    var bodyTable = sizer.createEl('table', { cls: 'table-csv-table table-csv-body-table' });
+    this.applyColgroup(bodyTable, cols);
+    var tbody = bodyTable.createEl('tbody');
     this.viewBody = this.mode === 'view' ? body : [];
+    this.headWrapEl = headWrap;
+    this.headTableEl = headTable;
     this.scrollEl = scroll;
+    this.sizerEl = sizer;
+    this.bodyTableEl = bodyTable;
     this.tbodyEl = tbody;
     this.paintRows();
     var prevH = this.rowHeightPx;
@@ -2073,6 +2084,9 @@ class TableCsvView extends obsidian.TextFileView {
     if (this.savedScrollTop > 0 || this.savedScrollLeft > 0) {
       scroll.scrollTop = this.savedScrollTop;
       scroll.scrollLeft = this.savedScrollLeft;
+      if (this.headWrapEl) {
+        this.headWrapEl.scrollLeft = this.savedScrollLeft;
+      }
       this.paintRows();
     }
   }

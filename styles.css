@@ -85,10 +85,11 @@ html body .table-csv-view.is-edit {
 html body .table-csv-view.is-view .table-csv-scroll,
 html body .table-csv-view.is-edit .table-csv-scroll {
   flex: none;
-  height: calc(100vh - 12rem);
-  max-height: calc(100vh - 12rem);
+  height: calc(100vh - 14rem);
+  max-height: calc(100vh - 14rem);
   overflow-x: scroll;
   overflow-y: scroll;
+  scrollbar-gutter: stable;
   scrollbar-width: auto;
   scrollbar-color: var(--text-muted) var(--background-secondary);
 }
@@ -108,6 +109,22 @@ html body .table-csv-view.is-view .table-csv-scroll::-webkit-scrollbar-thumb,
 html body .table-csv-view.is-edit .table-csv-scroll::-webkit-scrollbar-thumb {
   background: var(--text-muted);
   border-radius: 7px;
+}
+
+.table-csv-head-wrap {
+  overflow: hidden;
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+.table-csv-virt-sizer {
+  position: relative;
+  width: max-content;
+  min-width: 100%;
+}
+
+.table-csv-body-table {
+  margin: 0;
 }
 
 .table-csv-table {
@@ -151,9 +168,7 @@ html body .table-csv-view.is-edit .table-csv-scroll::-webkit-scrollbar-thumb {
   max-width: none;
 }
 
-.table-csv-table th {
-  position: sticky;
-  top: 0;
+.table-csv-head-table th {
   background: var(--background-secondary);
   z-index: 1;
   box-shadow: 0 1px 0 var(--background-modifier-border);
@@ -196,15 +211,6 @@ html body .table-csv-view.is-view .table-csv-table tbody tr.is-pinned td.is-froz
 
 .table-csv-sortable.is-sorted {
   color: var(--text-accent);
-}
-
-.table-csv-spacer,
-.table-csv-spacer-cell {
-  padding: 0;
-  border: none;
-  line-height: 0;
-  font-size: 0;
-  background: transparent;
 }
 
 .table-csv-table tr.is-even td {
