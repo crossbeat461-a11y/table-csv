@@ -213,6 +213,23 @@ html body .table-csv-view.is-view .table-csv-table tbody tr.is-pinned td.is-froz
   color: var(--text-accent);
 }
 
+.table-csv-type-mark {
+  display: inline-block;
+  margin-left: 0.4em;
+  font-size: 0.75em;
+  font-weight: 400;
+  opacity: 0.65;
+  color: var(--text-muted);
+}
+
+.table-csv-check-cell {
+  text-align: center;
+}
+
+.table-csv-cell-check {
+  margin: 0;
+}
+
 .table-csv-table tr.is-even td {
   background: var(--background-primary-alt);
 }

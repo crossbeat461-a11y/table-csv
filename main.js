@@ -329,6 +329,7 @@ function emptyStore() {
     lastSeenVersion: undefined,
     hideBmcAfterUpdate: false,
     columnWidths: {},
+    columnTypes: {},
   };
 }
 
@@ -355,6 +356,19 @@ function normalizeStore(data) {
         var w = Number(n);
         return w > 0 ? Math.round(w) : 0;
       });
+    }
+  }
+  store.columnTypes = {};
+  if (data.columnTypes && typeof data.columnTypes === 'object' && !Array.isArray(data.columnTypes)) {
+    var typeKeys = Object.keys(data.columnTypes);
+    var ti;
+    for (ti = 0; ti < typeKeys.length; ti++) {
+      var tKey = typeKeys[ti];
+      var tList = data.columnTypes[tKey];
+      if (!Array.isArray(tList)) {
+        continue;
+      }
+      store.columnTypes[tKey] = tList.map(normalizeColType);
     }
   }
   return store;
@@ -589,6 +603,135 @@ function compareCells(a, b) {
   return sa.localeCompare(sb, sortLocales(), { numeric: true, sensitivity: 'base' });
 }
 
+function normalizeColType(v) {
+  var s = String(v == null ? '' : v);
+  if (s === 'number' || s === 'date' || s === 'checkbox') {
+    return s;
+  }
+  return 'text';
+}
+
+function colTypeLabel(type) {
+  if (type === 'number') {
+    return t('数値', 'Number', 'Zahl');
+  }
+  if (type === 'date') {
+    return t('日付', 'Date', 'Datum');
+  }
+  if (type === 'checkbox') {
+    return t('チェック', 'Checkbox', 'Kontrollkästchen');
+  }
+  return t('テキスト', 'Text', 'Text');
+}
+
+function parseSortDate(s) {
+  var raw = String(s == null ? '' : s).trim();
+  if (!raw) {
+    return { ok: false, n: NaN };
+  }
+  var m = raw.match(/^(\d{4})[.\/-](\d{1,2})[.\/-](\d{1,2})(?:[ T].*)?$/);
+  if (m) {
+    var y = Number(m[1]);
+    var mo = Number(m[2]);
+    var d = Number(m[3]);
+    if (mo < 1 || mo > 12 || d < 1 || d > 31) {
+      return { ok: false, n: NaN };
+    }
+    return { ok: true, n: Date.UTC(y, mo - 1, d) };
+  }
+  m = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:[ T].*)?$/);
+  if (m) {
+    var d2 = Number(m[1]);
+    var mo2 = Number(m[2]);
+    var y2 = Number(m[3]);
+    if (mo2 < 1 || mo2 > 12 || d2 < 1 || d2 > 31) {
+      return { ok: false, n: NaN };
+    }
+    return { ok: true, n: Date.UTC(y2, mo2 - 1, d2) };
+  }
+  if (isGermanNumeric()) {
+    m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T].*)?$/);
+    if (m) {
+      var d3 = Number(m[1]);
+      var mo3 = Number(m[2]);
+      var y3 = Number(m[3]);
+      if (mo3 < 1 || mo3 > 12 || d3 < 1 || d3 > 31) {
+        return { ok: false, n: NaN };
+      }
+      return { ok: true, n: Date.UTC(y3, mo3 - 1, d3) };
+    }
+  }
+  return { ok: false, n: NaN };
+}
+
+function isCheckedValue(s) {
+  var raw = String(s == null ? '' : s).trim().toLowerCase();
+  if (!raw) {
+    return false;
+  }
+  return (
+    raw === 'true' ||
+    raw === '1' ||
+    raw === 'yes' ||
+    raw === 'y' ||
+    raw === 'x' ||
+    raw === 'ja' ||
+    raw === 'はい' ||
+    raw === 'on' ||
+    raw === 'checked'
+  );
+}
+
+function checkboxToken(on) {
+  return on ? 'TRUE' : 'FALSE';
+}
+
+function compareTypedCells(type, a, b) {
+  if (type === 'number') {
+    var na = parseSortNumber(cellSortKey(a));
+    var nb = parseSortNumber(cellSortKey(b));
+    if (!na.ok && !nb.ok) {
+      return compareCells(a, b);
+    }
+    if (!na.ok) {
+      return 1;
+    }
+    if (!nb.ok) {
+      return -1;
+    }
+    if (na.n === nb.n) {
+      return 0;
+    }
+    return na.n < nb.n ? -1 : 1;
+  }
+  if (type === 'date') {
+    var da = parseSortDate(a);
+    var db = parseSortDate(b);
+    if (!da.ok && !db.ok) {
+      return compareCells(a, b);
+    }
+    if (!da.ok) {
+      return 1;
+    }
+    if (!db.ok) {
+      return -1;
+    }
+    if (da.n === db.n) {
+      return 0;
+    }
+    return da.n < db.n ? -1 : 1;
+  }
+  if (type === 'checkbox') {
+    var ca = isCheckedValue(a);
+    var cb = isCheckedValue(b);
+    if (ca === cb) {
+      return 0;
+    }
+    return ca ? 1 : -1;
+  }
+  return compareCells(a, b);
+}
+
 function isImeKeydown(ev) {
   if (!ev) {
     return false;
@@ -687,6 +830,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.redoStack = [];
     this.rangeDrag = false;
     this.colWidths = [];
+    this.colTypes = [];
     this.cellUndoPushed = false;
     this.resizingCol = false;
     this.skipSortClick = false;
@@ -889,6 +1033,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.redoStack = [];
     this.cellUndoPushed = false;
     this.loadColWidths();
+    this.loadColTypes();
     if (clear) {
       this.filter = '';
       this.mode = 'view';
@@ -937,6 +1082,7 @@ class TableCsvView extends obsidian.TextFileView {
     return {
       data: this.formatCurrent(),
       widths: this.colWidths.slice(),
+      types: this.colTypes.slice(),
       selRow: this.selRow,
       selCol: this.selCol,
       selEndRow: this.selEndRow,
@@ -1055,6 +1201,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.rows = parsed.rows;
     this.quoteAll = parsed.quoteAll;
     this.colWidths = Array.isArray(snap.widths) ? snap.widths.slice() : [];
+    this.colTypes = Array.isArray(snap.types) ? snap.types.map(normalizeColType) : [];
     var sr = typeof snap.selRow === 'number' ? snap.selRow : 0;
     var sc = typeof snap.selCol === 'number' ? snap.selCol : 0;
     this.selRow = sr;
@@ -1063,7 +1210,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.selEndCol = typeof snap.selEndCol === 'number' ? snap.selEndCol : sc;
     this.cellUndoPushed = false;
     this.requestSave();
-    void this.saveColWidths();
+    void this.saveColLayout();
     this.render();
   }
 
@@ -1100,17 +1247,101 @@ class TableCsvView extends obsidian.TextFileView {
     return false;
   }
 
-  async saveColWidths() {
+  async saveColLayout() {
     if (!this.plugin || !this.file) {
       return;
     }
     var path = this.file.path;
+    if (!this.plugin.store.columnWidths) {
+      this.plugin.store.columnWidths = {};
+    }
+    if (!this.plugin.store.columnTypes) {
+      this.plugin.store.columnTypes = {};
+    }
     if (this.hasCustomColWidths()) {
       this.plugin.store.columnWidths[path] = this.colWidths.slice();
     } else if (this.plugin.store.columnWidths[path]) {
       delete this.plugin.store.columnWidths[path];
     }
+    if (this.hasCustomColTypes()) {
+      this.plugin.store.columnTypes[path] = this.colTypes.slice();
+    } else if (this.plugin.store.columnTypes[path]) {
+      delete this.plugin.store.columnTypes[path];
+    }
     await this.plugin.persistStore();
+  }
+
+  loadColTypes() {
+    this.colTypes = [];
+    if (!this.plugin || !this.plugin.store || !this.plugin.store.columnTypes || !this.file) {
+      return;
+    }
+    var saved = this.plugin.store.columnTypes[this.file.path];
+    if (Array.isArray(saved)) {
+      this.colTypes = saved.map(normalizeColType);
+    }
+  }
+
+  ensureColTypes(cols) {
+    if (!this.colTypes) {
+      this.colTypes = [];
+    }
+    while (this.colTypes.length < cols) {
+      this.colTypes.push('text');
+    }
+    if (this.colTypes.length > cols) {
+      this.colTypes.length = cols;
+    }
+  }
+
+  hasCustomColTypes() {
+    var i;
+    for (i = 0; i < this.colTypes.length; i++) {
+      if (normalizeColType(this.colTypes[i]) !== 'text') {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  colTypeAt(col) {
+    var cols = this.rows.length ? colCountOf(this.rows) : this.colTypes.length;
+    this.ensureColTypes(cols);
+    if (col < 0 || col >= this.colTypes.length) {
+      return 'text';
+    }
+    return normalizeColType(this.colTypes[col]);
+  }
+
+  setColType(col, type) {
+    var cols = this.rows.length ? colCountOf(this.rows) : 0;
+    this.ensureColTypes(cols);
+    if (col < 0 || col >= cols) {
+      return;
+    }
+    this.colTypes[col] = normalizeColType(type);
+    void this.saveColLayout();
+    this.render();
+  }
+
+  openColTypeMenu(ev, col) {
+    ev.preventDefault();
+    var self = this;
+    var menu = new obsidian.Menu();
+    var types = ['text', 'number', 'date', 'checkbox'];
+    var i;
+    for (i = 0; i < types.length; i++) {
+      (function (ty) {
+        menu.addItem(function (item) {
+          item.setTitle(colTypeLabel(ty));
+          item.setChecked(self.colTypeAt(col) === ty);
+          item.onClick(function () {
+            self.setColType(col, ty);
+          });
+        });
+      })(types[i]);
+    }
+    menu.showAtMouseEvent(ev);
   }
 
   applyColgroup(table, cols) {
@@ -1167,7 +1398,7 @@ class TableCsvView extends obsidian.TextFileView {
       self.resizingCol = false;
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
-      void self.saveColWidths();
+      void self.saveColLayout();
       window.setTimeout(function () {
         self.skipSortClick = false;
       }, 0);
@@ -1520,8 +1751,10 @@ class TableCsvView extends obsidian.TextFileView {
       this.rows.push(['', '']);
       this.collapseSelTo(0, 1);
       this.colWidths = [0, 0];
+      this.colTypes = ['text', 'text'];
     } else {
       this.ensureColWidths(colCountOf(this.rows));
+      this.ensureColTypes(colCountOf(this.rows));
       for (var i = 0; i < this.rows.length; i++) {
         while (this.rows[i].length < at) {
           this.rows[i].push('');
@@ -1529,10 +1762,11 @@ class TableCsvView extends obsidian.TextFileView {
         this.rows[i].splice(at, 0, '');
       }
       this.colWidths.splice(at, 0, 0);
+      this.colTypes.splice(at, 0, 'text');
       this.collapseSelTo(this.selRow, at);
     }
     this.persist();
-    void this.saveColWidths();
+    void this.saveColLayout();
     this.render();
   }
 
@@ -1544,12 +1778,14 @@ class TableCsvView extends obsidian.TextFileView {
     var i;
     this.pushUndo();
     this.ensureColWidths(cols);
+    this.ensureColTypes(cols);
     if (cols <= 1) {
       for (i = 0; i < this.rows.length; i++) {
         this.rows[i] = [''];
       }
       this.collapseSelTo(this.selRow, 0);
       this.colWidths = [0];
+      this.colTypes = ['text'];
     } else {
       for (i = 0; i < this.rows.length; i++) {
         if (this.rows[i].length > this.selCol) {
@@ -1557,13 +1793,14 @@ class TableCsvView extends obsidian.TextFileView {
         }
       }
       this.colWidths.splice(this.selCol, 1);
+      this.colTypes.splice(this.selCol, 1);
       if (this.selCol >= cols - 1) {
         this.selCol = cols - 2;
       }
       this.collapseSelTo(this.selRow, this.selCol);
     }
     this.persist();
-    void this.saveColWidths();
+    void this.saveColLayout();
     this.render();
   }
 
@@ -1617,8 +1854,9 @@ class TableCsvView extends obsidian.TextFileView {
     }
     var col = this.sortCol;
     var dir = this.sortDir === 'desc' ? -1 : 1;
+    var type = this.colTypeAt(col);
     return items.slice().sort(function (a, b) {
-      return compareCells(a.row[col], b.row[col]) * dir;
+      return compareTypedCells(type, a.row[col], b.row[col]) * dir;
     });
   }
 
@@ -1728,8 +1966,16 @@ class TableCsvView extends obsidian.TextFileView {
       var c;
       for (c = 0; c < cols; c++) {
         var val = String(item.row[c] == null ? '' : item.row[c]);
-        var td = tr.createEl('td', { text: val, attr: { title: val } });
-        td.toggleClass('is-frozen-col', this.pinFirstCol && c === 0);
+        if (this.colTypeAt(c) === 'checkbox') {
+          var checkTd = tr.createEl('td', { cls: 'table-csv-check-cell', attr: { title: val } });
+          checkTd.toggleClass('is-frozen-col', this.pinFirstCol && c === 0);
+          var viewBox = checkTd.createEl('input', { type: 'checkbox' });
+          viewBox.checked = isCheckedValue(val);
+          viewBox.disabled = true;
+        } else {
+          var td = tr.createEl('td', { text: val, attr: { title: val } });
+          td.toggleClass('is-frozen-col', this.pinFirstCol && c === 0);
+        }
       }
     }
   }
@@ -2032,24 +2278,45 @@ class TableCsvView extends obsidian.TextFileView {
     for (c = 0; c < cols; c++) {
       var headVal = String(rows[0][c] == null ? '' : rows[0][c]);
       if (this.mode === 'edit') {
-        var th = hr.createEl('th');
-        th.toggleClass('is-in-range', this.cellInRange(0, c));
-        th.toggleClass('is-selected', this.selEndRow === 0 && this.selEndCol === c);
-        this.bindCell(th, 0, c, headVal, true);
-        this.bindColResize(th, c);
+        (function (colIndex) {
+          var th = hr.createEl('th');
+          th.toggleClass('is-in-range', self.cellInRange(0, colIndex));
+          th.toggleClass('is-selected', self.selEndRow === 0 && self.selEndCol === colIndex);
+          self.bindCell(th, 0, colIndex, headVal, true);
+          self.bindColResize(th, colIndex);
+          th.setAttribute(
+            'title',
+            t('右クリックで列の型', 'Right-click to set the column type', 'Rechtsklick für den Spaltentyp') +
+              ' — ' +
+              colTypeLabel(self.colTypeAt(colIndex)),
+          );
+          th.addEventListener('contextmenu', function (ev) {
+            self.openColTypeMenu(ev, colIndex);
+          });
+        })(c);
       } else {
         (function (colIndex) {
           var label = headVal;
           if (self.sortCol === colIndex) {
             label += self.sortDir === 'desc' ? ' ▼' : ' ▲';
           }
+          var typeNow = self.colTypeAt(colIndex);
           var thView = hr.createEl('th', {
             cls: 'table-csv-sortable',
             attr: {
-              title: t('クリックで並べ替え', 'Click to sort', 'Zum Sortieren klicken'),
+              title:
+                t('クリックで並べ替え。右クリックで列の型', 'Click to sort. Right-click to set the column type', 'Klicken zum Sortieren. Rechtsklick für den Spaltentyp') +
+                ' — ' +
+                colTypeLabel(typeNow),
             },
           });
           thView.createSpan({ text: label });
+          if (typeNow !== 'text') {
+            thView.createSpan({
+              cls: 'table-csv-type-mark',
+              text: colTypeLabel(typeNow),
+            });
+          }
           thView.toggleClass('is-sorted', self.sortCol === colIndex);
           thView.toggleClass('is-frozen-col', self.pinFirstCol && colIndex === 0);
           thView.addEventListener('click', function () {
@@ -2057,6 +2324,9 @@ class TableCsvView extends obsidian.TextFileView {
               return;
             }
             self.cycleSort(colIndex);
+          });
+          thView.addEventListener('contextmenu', function (ev) {
+            self.openColTypeMenu(ev, colIndex);
           });
           self.bindColResize(thView, colIndex);
         })(c);
@@ -2144,7 +2414,7 @@ class TableCsvView extends obsidian.TextFileView {
       this.paintRows();
     }
     var next = this.contentEl.querySelector(
-      '.table-csv-cell-input[data-row="' + String(r) + '"][data-col="' + String(c) + '"]',
+      '.table-csv-cell-input[data-row="' + String(r) + '"][data-col="' + String(c) + '"], .table-csv-cell-check[data-row="' + String(r) + '"][data-col="' + String(c) + '"]',
     );
     if (!next) {
       return;
@@ -2155,6 +2425,42 @@ class TableCsvView extends obsidian.TextFileView {
     } catch (e) {
       /* ignore */
     }
+  }
+
+  bindCellNav(el) {
+    var self = this;
+    el.addEventListener('keydown', function (ev) {
+      if (isImeKeydown(ev) || self.cellComposing) {
+        if (ev.key === 'Tab') {
+          ev.preventDefault();
+        }
+        return;
+      }
+      if ((ev.key === 'Delete' || ev.key === 'Backspace') && self.hasCellRange()) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        self.clearSelectedCells();
+        return;
+      }
+      if (ev.ctrlKey || ev.metaKey || ev.altKey) {
+        return;
+      }
+      var key = ev.key === 'Tab' ? 'Tab' : ev.key === 'Enter' ? 'Enter' : '';
+      if (!key) {
+        return;
+      }
+      if (key === 'Enter' && self.ignoreEnterAfterIme) {
+        ev.preventDefault();
+        return;
+      }
+      var cols = colCountOf(self.rows);
+      var pos = nextEditCell(self.selRow, self.selCol, self.rows.length, cols, key, ev.shiftKey);
+      ev.preventDefault();
+      if (pos.r === self.selRow && pos.c === self.selCol) {
+        return;
+      }
+      self.focusEditCell(pos.r, pos.c);
+    });
   }
 
   bindCell(host, r, c, val, isHeader) {
@@ -2168,6 +2474,11 @@ class TableCsvView extends obsidian.TextFileView {
       if (ev.target && ev.target.closest && ev.target.closest('.table-csv-col-resizer')) {
         return;
       }
+      if (ev.target && ev.target.classList && ev.target.classList.contains('table-csv-cell-check')) {
+        self.collapseSelTo(r, c);
+        self.paintSelection();
+        return;
+      }
       self.rangeDrag = true;
       if (ev.shiftKey) {
         ev.preventDefault();
@@ -2177,6 +2488,29 @@ class TableCsvView extends obsidian.TextFileView {
       }
       self.paintSelection();
     });
+    if (!isHeader && this.colTypeAt(c) === 'checkbox') {
+      host.addClass('table-csv-check-cell');
+      var box = host.createEl('input', {
+        type: 'checkbox',
+        cls: 'table-csv-cell-check',
+        attr: {
+          title: val,
+          'data-row': String(r),
+          'data-col': String(c),
+        },
+      });
+      box.checked = isCheckedValue(val);
+      box.addEventListener('change', function () {
+        self.pushUndo();
+        ensureCell(self.rows, r, c);
+        self.rows[r][c] = checkboxToken(box.checked);
+        box.setAttribute('title', self.rows[r][c]);
+        self.cellUndoPushed = false;
+        self.persist();
+      });
+      this.bindCellNav(box);
+      return;
+    }
     var field = host.createEl('input', {
       type: 'text',
       cls: isHeader ? 'table-csv-cell-input is-header' : 'table-csv-cell-input',
@@ -2213,38 +2547,7 @@ class TableCsvView extends obsidian.TextFileView {
       self.cellUndoPushed = false;
       self.persist();
     });
-    field.addEventListener('keydown', function (ev) {
-      if (isImeKeydown(ev) || self.cellComposing) {
-        if (ev.key === 'Tab') {
-          ev.preventDefault();
-        }
-        return;
-      }
-      if ((ev.key === 'Delete' || ev.key === 'Backspace') && self.hasCellRange()) {
-        ev.preventDefault();
-        ev.stopPropagation();
-        self.clearSelectedCells();
-        return;
-      }
-      if (ev.ctrlKey || ev.metaKey || ev.altKey) {
-        return;
-      }
-      var key = ev.key === 'Tab' ? 'Tab' : ev.key === 'Enter' ? 'Enter' : '';
-      if (!key) {
-        return;
-      }
-      if (key === 'Enter' && self.ignoreEnterAfterIme) {
-        ev.preventDefault();
-        return;
-      }
-      var cols = colCountOf(self.rows);
-      var pos = nextEditCell(self.selRow, self.selCol, self.rows.length, cols, key, ev.shiftKey);
-      ev.preventDefault();
-      if (pos.r === self.selRow && pos.c === self.selCol) {
-        return;
-      }
-      self.focusEditCell(pos.r, pos.c);
-    });
+    this.bindCellNav(field);
   }
 }
 
@@ -2380,7 +2683,8 @@ class TableCsvPlugin extends obsidian.Plugin {
     await this.saveData({
       lastSeenVersion: this.store.lastSeenVersion,
       hideBmcAfterUpdate: this.store.hideBmcAfterUpdate,
-      columnWidths: this.store.columnWidths,
+      columnWidths: this.store.columnWidths || {},
+      columnTypes: this.store.columnTypes || {},
     });
   }
 
