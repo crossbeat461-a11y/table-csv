@@ -64,7 +64,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.13.0** — set a column type (text, number, date, checkbox) from the header.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.13.1** — header and body columns stay aligned.
 
 ### Author
 
@@ -134,7 +134,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.13.0** — 列見出しから型（テキスト、数値、日付、チェック）を指定できる。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.13.1** — 見出しとデータの列幅を揃える。
 
 ### 作者
 
@@ -186,7 +186,7 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 
 ### Versionshinweise
 
-Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.13.0** — Spaltentyp (Text, Zahl, Datum, Kontrollkästchen) über den Kopf setzen.
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.13.1** — Kopf- und Datenspalten bleiben ausgerichtet.
 
 ### Lizenz
 

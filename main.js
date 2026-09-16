@@ -845,6 +845,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.headTableEl = null;
     this.sizerEl = null;
     this.bodyTableEl = null;
+    this.layoutColPx = [];
   }
 
   syncViewLeafClass() {
@@ -1347,20 +1348,130 @@ class TableCsvView extends obsidian.TextFileView {
   applyColgroup(table, cols) {
     var cg = table.createEl('colgroup');
     if (this.mode === 'edit') {
-      cg.createEl('col', { cls: 'table-csv-col-gutter' });
+      var gutterCol = cg.createEl('col', { cls: 'table-csv-col-gutter' });
+      gutterCol.setAttribute('width', '40');
     }
     var i;
+    var total = this.mode === 'edit' ? 40 : 0;
     var sized = false;
     for (i = 0; i < cols; i++) {
       var col = cg.createEl('col');
-      var w = this.colWidths[i];
+      var w = this.colWidthPx(i);
       if (w > 0) {
         col.setAttribute('width', String(w));
+        total += w;
         sized = true;
       }
     }
     if (sized) {
       table.addClass('is-sized');
+      table.setAttribute('width', String(total));
+    }
+  }
+
+  colWidthPx(col) {
+    if (this.colWidths && this.colWidths[col] > 0) {
+      return this.colWidths[col];
+    }
+    if (this.layoutColPx && this.layoutColPx[col] > 0) {
+      return this.layoutColPx[col];
+    }
+    return 0;
+  }
+
+  measureColWidths(cols) {
+    var out = [];
+    var i;
+    for (i = 0; i < cols; i++) {
+      out[i] = MIN_COL_PX;
+    }
+    if (!cols || !this.contentEl) {
+      return out;
+    }
+    var probe = this.contentEl.createSpan({ cls: 'table-csv-col-probe' });
+    var em = 16;
+    try {
+      var fs = window.getComputedStyle(probe).fontSize;
+      var parsed = parseFloat(fs);
+      if (parsed > 0) {
+        em = parsed;
+      }
+    } catch (e) {
+      /* ignore */
+    }
+    var cap = Math.round(28 * em);
+    var pad = 20;
+    var maxRows = Math.min(this.rows.length, 400);
+    for (i = 0; i < cols; i++) {
+      if (this.colWidths[i] > 0) {
+        out[i] = this.colWidths[i];
+        continue;
+      }
+      var best = MIN_COL_PX;
+      var samples = [];
+      if (this.rows.length) {
+        samples.push(String(this.rows[0][i] == null ? '' : this.rows[0][i]));
+      }
+      if (this.colTypeAt(i) !== 'text') {
+        samples.push(samples[0] ? samples[0] + ' ' + colTypeLabel(this.colTypeAt(i)) : colTypeLabel(this.colTypeAt(i)));
+      }
+      var longest = '';
+      var r;
+      for (r = 1; r < maxRows; r++) {
+        var v = String(this.rows[r][i] == null ? '' : this.rows[r][i]);
+        if (v.length > longest.length) {
+          longest = v;
+        }
+      }
+      if (longest) {
+        samples.push(longest);
+      }
+      var s;
+      for (s = 0; s < samples.length; s++) {
+        probe.setText(samples[s] || ' ');
+        var w = Math.ceil(probe.getBoundingClientRect().width) + pad;
+        if (w > best) {
+          best = w;
+        }
+      }
+      if (this.colTypeAt(i) === 'checkbox') {
+        best = Math.max(best, 56);
+      }
+      out[i] = Math.max(MIN_COL_PX, Math.min(cap, best));
+    }
+    probe.remove();
+    return out;
+  }
+
+  applySharedColWidths(cols) {
+    if (!this.headTableEl || !this.bodyTableEl || cols < 1) {
+      return;
+    }
+    var widths = [];
+    var i;
+    var total = this.mode === 'edit' ? 40 : 0;
+    for (i = 0; i < cols; i++) {
+      var w = this.colWidthPx(i);
+      if (w < MIN_COL_PX) {
+        w = MIN_COL_PX;
+      }
+      widths[i] = w;
+      total += w;
+    }
+    var tables = [this.headTableEl, this.bodyTableEl];
+    var offset = this.mode === 'edit' ? 1 : 0;
+    var t;
+    for (t = 0; t < tables.length; t++) {
+      var table = tables[t];
+      table.addClass('is-sized');
+      table.setAttribute('width', String(total));
+      var nodes = table.querySelectorAll('colgroup col');
+      for (i = 0; i < cols; i++) {
+        var el = nodes[offset + i];
+        if (el) {
+          el.setAttribute('width', String(widths[i]));
+        }
+      }
     }
   }
 
@@ -1392,6 +1503,10 @@ class TableCsvView extends obsidian.TextFileView {
     var onMove = function (ev) {
       var w = Math.max(MIN_COL_PX, Math.round(startW + ev.clientX - startX));
       self.colWidths[colIndex] = w;
+      if (!self.layoutColPx) {
+        self.layoutColPx = [];
+      }
+      self.layoutColPx[colIndex] = w;
       self.applyLiveColWidth(colIndex, w);
     };
     var onUp = function () {
@@ -2015,20 +2130,17 @@ class TableCsvView extends obsidian.TextFileView {
     }
     this.setBodyShift(start * rowH);
     tbody.empty();
-    if (!cols || count <= 0) {
+    if (!cols) {
       return;
     }
-    if (this.mode === 'edit') {
-      this.paintEditRows(tbody, cols, start, end);
-    } else {
-      this.paintViewRows(tbody, cols, start, end);
-    }
-    if (this.bodyTableEl && this.headTableEl) {
-      var bw = Math.ceil(this.bodyTableEl.getBoundingClientRect().width);
-      if (bw > 0) {
-        this.headTableEl.setAttribute('width', String(bw));
+    if (count > 0) {
+      if (this.mode === 'edit') {
+        this.paintEditRows(tbody, cols, start, end);
+      } else {
+        this.paintViewRows(tbody, cols, start, end);
       }
     }
+    this.applySharedColWidths(cols);
   }
 
   render() {
@@ -2268,6 +2380,8 @@ class TableCsvView extends obsidian.TextFileView {
     var headWrap = el.createDiv({ cls: 'table-csv-head-wrap' });
     var headTable = headWrap.createEl('table', { cls: 'table-csv-table table-csv-head-table' });
     this.ensureColWidths(cols);
+    this.ensureColTypes(cols);
+    this.layoutColPx = this.measureColWidths(cols);
     this.applyColgroup(headTable, cols);
     var thead = headTable.createEl('thead');
     var hr = thead.createEl('tr');
