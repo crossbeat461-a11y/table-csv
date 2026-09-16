@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.13.1
+
+- Keep header and body column widths the same. The two tables now share one measured width per column, so labels stay over their cells
+
+### 日本語
+
+- 見出しとデータの列幅を揃える。2つの表で列ごとに同じ幅を使い、見出しがセルの上に来るようにする
+
+### Deutsch
+
+- Spaltenbreiten von Kopf und Daten angleichen. Beide Tabellen nutzen dieselbe gemessene Breite, damit die Beschriftung über der Zelle bleibt
+
 ## 1.13.0
 
 - View and Edit: right-click a column header to set its type (text, number, date, checkbox). Types are remembered per file and are not written into the CSV
