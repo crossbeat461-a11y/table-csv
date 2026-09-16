@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.13.0
+
+- View and Edit: right-click a column header to set its type (text, number, date, checkbox). Types are remembered per file and are not written into the CSV
+- View: number and date columns sort by value; checkbox columns sort unchecked then checked
+- Edit: a checkbox column shows a tick box and stores `TRUE` or `FALSE`
+
+### 日本語
+
+- 閲覧・編集: 列見出しを右クリックして型（テキスト、数値、日付、チェック）を指定する。ファイルごとに覚え、CSV には書かない
+- 閲覧: 数値・日付の列は値で並べ替える。チェックの列はオフ、オンの順
+- 編集: チェックの列はチェックボックスになり、`TRUE` / `FALSE` を保存する
+
+### Deutsch
+
+- Ansicht und Bearbeiten: Rechtsklick auf den Spaltenkopf setzt den Typ (Text, Zahl, Datum, Kontrollkästchen). Der Typ bleibt pro Datei und steht nicht in der CSV
+- Ansicht: Zahlen- und Datumsspalten sortieren nach Wert; Kontrollkästchen sortieren von aus nach an
+- Bearbeiten: eine Kontrollkästchen-Spalte zeigt ein Kästchen und speichert `TRUE` oder `FALSE`
+
 ## 1.12.1
 
 - Fix vertical scrolling for large files: row height lives outside the table, so the scrollbar can move
