@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.14.0
+
+- Edit: arrow keys move to the next cell when the caret is at the edge (or the whole cell is selected). Up and down always move. Shift+arrow extends a range. Escape clears the range
+
+### 日本語
+
+- 編集: 矢印は、カーソルが端にあるとき（またはセル全体を選んでいるとき）隣のセルへ進む。上下は常にセル移動。`Shift`+矢印で範囲。`Esc` で範囲を解除
+
+### Deutsch
+
+- Bearbeiten: Pfeiltasten wechseln die Zelle am Rand (oder wenn die ganze Zelle gewählt ist). Hoch/Runter immer. Umschalt+Pfeil erweitert die Auswahl. Escape hebt die Auswahl auf
+
 ## 1.13.1
 
 - Keep header and body column widths the same. The two tables now share one measured width per column, so labels stay over their cells
