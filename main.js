@@ -763,8 +763,9 @@ function nextEditCell(row, col, rowCount, colCount, key, shift) {
   if (c >= colCount) {
     c = colCount - 1;
   }
-  if (key === 'Enter') {
-    if (shift) {
+  if (key === 'Enter' || key === 'ArrowUp' || key === 'ArrowDown') {
+    var goUp = key === 'ArrowUp' || (key === 'Enter' && shift);
+    if (goUp) {
       return r > 0 ? { r: r - 1, c: c } : { r: r, c: c };
     }
     return r < rowCount - 1 ? { r: r + 1, c: c } : { r: r, c: c };
@@ -787,7 +788,44 @@ function nextEditCell(row, col, rowCount, colCount, key, shift) {
     }
     return { r: r, c: c };
   }
+  if (key === 'ArrowLeft') {
+    return c > 0 ? { r: r, c: c - 1 } : { r: r, c: c };
+  }
+  if (key === 'ArrowRight') {
+    return c < colCount - 1 ? { r: r, c: c + 1 } : { r: r, c: c };
+  }
   return { r: r, c: c };
+}
+
+function shouldLeaveCell(el, dir) {
+  if (!el || el.type === 'checkbox') {
+    return true;
+  }
+  var val = String(el.value == null ? '' : el.value);
+  var start;
+  var end;
+  try {
+    start = el.selectionStart;
+    end = el.selectionEnd;
+  } catch (e) {
+    return true;
+  }
+  if (typeof start !== 'number' || typeof end !== 'number') {
+    return true;
+  }
+  if (start === 0 && end === val.length) {
+    return true;
+  }
+  if (start !== end) {
+    return false;
+  }
+  if (dir === 'left') {
+    return start === 0;
+  }
+  if (dir === 'right') {
+    return end === val.length;
+  }
+  return true;
 }
 
 function ensureCell(rows, r, c) {
@@ -2550,6 +2588,21 @@ class TableCsvView extends obsidian.TextFileView {
         }
         return;
       }
+      if (ev.key === 'Escape') {
+        ev.preventDefault();
+        if (self.hasCellRange()) {
+          self.collapseSelTo(self.selRow, self.selCol);
+          self.paintSelection();
+        } else {
+          try {
+            var n = String(el.value == null ? '' : el.value).length;
+            el.setSelectionRange(n, n);
+          } catch (e) {
+            /* ignore */
+          }
+        }
+        return;
+      }
       if ((ev.key === 'Delete' || ev.key === 'Backspace') && self.hasCellRange()) {
         ev.preventDefault();
         ev.stopPropagation();
@@ -2559,7 +2612,17 @@ class TableCsvView extends obsidian.TextFileView {
       if (ev.ctrlKey || ev.metaKey || ev.altKey) {
         return;
       }
-      var key = ev.key === 'Tab' ? 'Tab' : ev.key === 'Enter' ? 'Enter' : '';
+      var arrowDir = '';
+      if (ev.key === 'ArrowLeft') {
+        arrowDir = 'left';
+      } else if (ev.key === 'ArrowRight') {
+        arrowDir = 'right';
+      } else if (ev.key === 'ArrowUp') {
+        arrowDir = 'up';
+      } else if (ev.key === 'ArrowDown') {
+        arrowDir = 'down';
+      }
+      var key = ev.key === 'Tab' ? 'Tab' : ev.key === 'Enter' ? 'Enter' : arrowDir ? ev.key : '';
       if (!key) {
         return;
       }
@@ -2568,11 +2631,42 @@ class TableCsvView extends obsidian.TextFileView {
         return;
       }
       var cols = colCountOf(self.rows);
-      var pos = nextEditCell(self.selRow, self.selCol, self.rows.length, cols, key, ev.shiftKey);
-      ev.preventDefault();
-      if (pos.r === self.selRow && pos.c === self.selCol) {
+      if (arrowDir && ev.shiftKey) {
+        if (arrowDir === 'left' || arrowDir === 'right') {
+          if (!shouldLeaveCell(el, arrowDir)) {
+            return;
+          }
+        }
+        var endPos = nextEditCell(self.selEndRow, self.selEndCol, self.rows.length, cols, key, false);
+        if (endPos.r === self.selEndRow && endPos.c === self.selEndCol) {
+          ev.preventDefault();
+          return;
+        }
+        ev.preventDefault();
+        self.extendSelTo(endPos.r, endPos.c);
+        if (endPos.r >= 1) {
+          self.scrollEditRowIntoView(endPos.r);
+          self.paintRows();
+        }
+        self.paintSelection();
         return;
       }
+      if (arrowDir && !ev.shiftKey && self.hasCellRange()) {
+        ev.preventDefault();
+        self.focusEditCell(self.selEndRow, self.selEndCol);
+        return;
+      }
+      if (arrowDir && (arrowDir === 'left' || arrowDir === 'right') && !shouldLeaveCell(el, arrowDir)) {
+        return;
+      }
+      var pos = nextEditCell(self.selRow, self.selCol, self.rows.length, cols, key, ev.shiftKey);
+      if (pos.r === self.selRow && pos.c === self.selCol) {
+        if (key === 'Tab' || key === 'Enter' || arrowDir) {
+          ev.preventDefault();
+        }
+        return;
+      }
+      ev.preventDefault();
       self.focusEditCell(pos.r, pos.c);
     });
   }
