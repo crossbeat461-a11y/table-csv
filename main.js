@@ -745,6 +745,17 @@ function isImeKeydown(ev) {
   return ev.keyCode === 229;
 }
 
+// True when the key event comes from the Edit filter box (a type="search"
+// input), so cell-level shortcuts (Delete range, copy, undo) leave it alone.
+function isFilterSearchTarget(ev) {
+  var tgt = ev && ev.target;
+  return !!(
+    tgt &&
+    tgt.tagName === 'INPUT' &&
+    String(tgt.getAttribute && tgt.getAttribute('type')) === 'search'
+  );
+}
+
 function nextEditCell(row, col, rowCount, colCount, key, shift) {
   var r = row;
   var c = col;
@@ -795,6 +806,27 @@ function nextEditCell(row, col, rowCount, colCount, key, shift) {
     return c < colCount - 1 ? { r: r, c: c + 1 } : { r: r, c: c };
   }
   return { r: r, c: c };
+}
+
+// Move the cursor over a filtered set of edit rows.
+// navRows is the ordered list of real row indices shown in edit
+// (index 0 is the header row, then the body rows that pass the filter).
+// Row movement happens in this visual space; the result is mapped back
+// to a real row index so cell writes still target this.rows correctly.
+function nextEditCellFiltered(curRow, curCol, navRows, colCount, key, shift) {
+  if (!navRows || !navRows.length) {
+    return { r: curRow, c: curCol };
+  }
+  var pos = navRows.indexOf(curRow);
+  if (pos < 0) {
+    pos = 0;
+  }
+  var res = nextEditCell(pos, curCol, navRows.length, colCount, key, shift);
+  var realR = navRows[res.r];
+  if (realR == null) {
+    realR = curRow;
+  }
+  return { r: realR, c: res.c };
 }
 
 function shouldLeaveCell(el, dir) {
@@ -875,6 +907,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.scrollEl = null;
     this.tbodyEl = null;
     this.viewBody = [];
+    this.editIndex = null;
     this.rowHeightPx = DEFAULT_ROW_PX;
     this.scrollPaintQueued = 0;
     this.savedScrollTop = 0;
@@ -926,6 +959,9 @@ class TableCsvView extends obsidian.TextFileView {
       if (self.mode !== 'edit') {
         return;
       }
+      if (isFilterSearchTarget(ev)) {
+        return;
+      }
       if (!(ev.ctrlKey || ev.metaKey) || ev.altKey) {
         return;
       }
@@ -961,6 +997,9 @@ class TableCsvView extends obsidian.TextFileView {
     });
     this.registerDomEvent(this.contentEl, 'keydown', function (ev) {
       if (self.mode !== 'edit' || ev.ctrlKey || ev.metaKey || ev.altKey) {
+        return;
+      }
+      if (isFilterSearchTarget(ev)) {
         return;
       }
       if (self.cellComposing || isImeKeydown(ev)) {
@@ -1197,19 +1236,77 @@ class TableCsvView extends obsidian.TextFileView {
     return b.r0 !== b.r1 || b.c0 !== b.c1;
   }
 
+  // Real rows and column bounds covered by the current selection.
+  // In edit the row span follows the filtered display order, so range
+  // actions never touch rows that are hidden by the filter.
+  rangeCellRows() {
+    var cols = colCountOf(this.rows);
+    if (!this.rows.length || cols < 1) {
+      return { rows: [], c0: 0, c1: 0 };
+    }
+    var c0 = Math.max(0, Math.min(cols - 1, Math.min(this.selCol, this.selEndCol)));
+    var c1 = Math.max(0, Math.min(cols - 1, Math.max(this.selCol, this.selEndCol)));
+    var out = [];
+    if (this.mode === 'edit') {
+      var nav = this.editNavRows();
+      var pA = nav.indexOf(this.selRow);
+      if (pA < 0) {
+        pA = 0;
+      }
+      var pB = nav.indexOf(this.selEndRow);
+      if (pB < 0) {
+        pB = 0;
+      }
+      var vlo = Math.min(pA, pB);
+      var vhi = Math.max(pA, pB);
+      for (var v = vlo; v <= vhi; v++) {
+        out.push(nav[v]);
+      }
+      return { rows: out, c0: c0, c1: c1 };
+    }
+    var r0 = Math.max(0, Math.min(this.rows.length - 1, Math.min(this.selRow, this.selEndRow)));
+    var r1 = Math.max(0, Math.min(this.rows.length - 1, Math.max(this.selRow, this.selEndRow)));
+    for (var r = r0; r <= r1; r++) {
+      out.push(r);
+    }
+    return { rows: out, c0: c0, c1: c1 };
+  }
+
   cellInRange(r, c) {
+    if (this.mode === 'edit') {
+      var nav = this.editNavRows();
+      var pos = nav.indexOf(r);
+      if (pos < 0) {
+        return false;
+      }
+      var pA = nav.indexOf(this.selRow);
+      if (pA < 0) {
+        pA = 0;
+      }
+      var pB = nav.indexOf(this.selEndRow);
+      if (pB < 0) {
+        pB = 0;
+      }
+      var vlo = Math.min(pA, pB);
+      var vhi = Math.max(pA, pB);
+      var cols = colCountOf(this.rows);
+      var c0 = Math.max(0, Math.min(cols - 1, Math.min(this.selCol, this.selEndCol)));
+      var c1 = Math.max(0, Math.min(cols - 1, Math.max(this.selCol, this.selEndCol)));
+      return pos >= vlo && pos <= vhi && c >= c0 && c <= c1;
+    }
     var b = this.rangeBounds();
     return r >= b.r0 && r <= b.r1 && c >= b.c0 && c <= b.c1;
   }
 
   rowsFromRange() {
-    var b = this.rangeBounds();
+    var rc = this.rangeCellRows();
     var out = [];
-    var r;
+    var i;
     var c;
-    for (r = b.r0; r <= b.r1; r++) {
+    for (i = 0; i < rc.rows.length; i++) {
+      var r = rc.rows[i];
       var row = [];
-      for (c = b.c0; c <= b.c1; c++) {
+      for (c = rc.c0; c <= rc.c1; c++) {
         var cell = this.rows[r] && this.rows[r][c];
         row.push(String(cell == null ? '' : cell));
       }
@@ -1638,11 +1735,12 @@ class TableCsvView extends obsidian.TextFileView {
   }
 
   rangeHasContent() {
-    var b = this.rangeBounds();
-    var r;
+    var rc = this.rangeCellRows();
+    var i;
     var c;
-    for (r = b.r0; r <= b.r1; r++) {
-      for (c = b.c0; c <= b.c1; c++) {
+    for (i = 0; i < rc.rows.length; i++) {
+      var r = rc.rows[i];
+      for (c = rc.c0; c <= rc.c1; c++) {
         var cell = this.rows[r] && this.rows[r][c];
         if (String(cell == null ? '' : cell) !== '') {
           return true;
@@ -1668,11 +1766,12 @@ class TableCsvView extends obsidian.TextFileView {
       return false;
     }
     this.pushUndo();
-    var b = this.rangeBounds();
-    var r;
+    var rc = this.rangeCellRows();
+    var i;
     var c;
-    for (r = b.r0; r <= b.r1; r++) {
-      for (c = b.c0; c <= b.c1; c++) {
+    for (i = 0; i < rc.rows.length; i++) {
+      var r = rc.rows[i];
+      for (c = rc.c0; c <= rc.c1; c++) {
         ensureCell(this.rows, r, c);
         this.rows[r][c] = '';
       }
@@ -1703,11 +1802,12 @@ class TableCsvView extends obsidian.TextFileView {
       return;
     }
     this.pushUndo();
-    var b = this.rangeBounds();
-    var r;
+    var rc = this.rangeCellRows();
+    var i;
     var c;
-    for (r = b.r0; r <= b.r1; r++) {
-      for (c = b.c0; c <= b.c1; c++) {
+    for (i = 0; i < rc.rows.length; i++) {
+      var r = rc.rows[i];
+      for (c = rc.c0; c <= rc.c1; c++) {
         ensureCell(this.rows, r, c);
         this.rows[r][c] = '';
       }
@@ -1822,6 +1922,19 @@ class TableCsvView extends obsidian.TextFileView {
       new obsidian.Notice(t('クリップボードが空です', 'Clipboard is empty', 'Zwischenablage ist leer'));
       return;
     }
+    // While filtered, a multi-row paste would flow into rows hidden by the
+    // filter and overwrite them. Refuse it and ask to clear the filter first,
+    // so the file is never changed in a way the user cannot see.
+    if (this.isFilteredEdit() && rows.length > 1) {
+      new obsidian.Notice(
+        t(
+          '絞り込み中は複数行を貼り付けできません。絞り込みを消してから貼り付けてください',
+          'Cannot paste multiple rows while filtered. Clear the filter first',
+          'Bei aktivem Filter kein Einfügen mehrerer Zeilen. Zuerst den Filter löschen',
+        ),
+      );
+      return;
+    }
     try {
       this.pushUndo();
       this.pasteAtSelection(rows);
@@ -1835,9 +1948,19 @@ class TableCsvView extends obsidian.TextFileView {
   }
 
   pasteAtSelection(block) {
-    var b = this.rows.length ? this.rangeBounds() : { r0: 0, c0: 0 };
-    var startR = this.rows.length ? Math.max(0, b.r0) : 0;
-    var startC = this.rows.length ? Math.max(0, b.c0) : 0;
+    var startR = 0;
+    var startC = 0;
+    if (this.rows.length) {
+      if (this.mode === 'edit') {
+        var rc = this.rangeCellRows();
+        startR = rc.rows.length ? rc.rows[0] : 0;
+        startC = Math.max(0, rc.c0);
+      } else {
+        var b = this.rangeBounds();
+        startR = Math.max(0, b.r0);
+        startC = Math.max(0, b.c0);
+      }
+    }
     var i;
     var j;
     for (i = 0; i < block.length; i++) {
@@ -1855,7 +1978,8 @@ class TableCsvView extends obsidian.TextFileView {
       return;
     }
     if (mode === 'edit') {
-      this.filter = '';
+      // Keep the filter so the rows found in View can be edited directly.
+      // Sorting is not carried into Edit (rows stay in file order there).
       this.sortCol = null;
       this.sortDir = null;
     } else {
@@ -1863,6 +1987,49 @@ class TableCsvView extends obsidian.TextFileView {
     }
     this.mode = mode;
     this.render();
+  }
+
+  // Real body-row indices (>= 1) shown in edit, honoring the filter.
+  // Empty filter -> every body row. Header (row 0) is always editable.
+  buildEditIndex() {
+    var out = [];
+    var rows = this.rows;
+    if (rows.length > 1) {
+      var q = normalizeFilterText(this.filter);
+      for (var i = 1; i < rows.length; i++) {
+        if (!q) {
+          out.push(i);
+          continue;
+        }
+        var hit = rows[i].some(function (v) {
+          return normalizeFilterText(v).includes(q);
+        });
+        if (hit) {
+          out.push(i);
+        }
+      }
+    }
+    this.editIndex = out;
+    return out;
+  }
+
+  // Ordered real row indices for edit navigation and range math:
+  // header first, then the filtered body rows.
+  editNavRows() {
+    var nav = [0];
+    var idx = this.editIndex || [];
+    for (var i = 0; i < idx.length; i++) {
+      nav.push(idx[i]);
+    }
+    return nav;
+  }
+
+  isFilteredEdit() {
+    return (
+      this.mode === 'edit' &&
+      this.editIndex != null &&
+      this.editIndex.length < Math.max(0, this.rows.length - 1)
+    );
   }
 
   insertRow() {
@@ -2089,8 +2256,11 @@ class TableCsvView extends obsidian.TextFileView {
     if (!scroll || r < 1) {
       return;
     }
+    var idx = this.editIndex ? this.editIndex.indexOf(r) : r - 1;
+    if (idx < 0) {
+      return;
+    }
     var h = this.rowHeightPx > 0 ? this.rowHeightPx : DEFAULT_ROW_PX;
-    var idx = r - 1;
     var top = idx * h;
     var viewH = Math.max(h, scroll.clientHeight);
     if (top < scroll.scrollTop) {
@@ -2134,9 +2304,14 @@ class TableCsvView extends obsidian.TextFileView {
   }
 
   paintEditRows(tbody, cols, start, end) {
-    var r;
-    for (r = start + 1; r < end + 1; r++) {
-      this.renderEditRow(tbody, r, cols);
+    var idx = this.editIndex || [];
+    var i;
+    for (i = start; i < end; i++) {
+      var realR = idx[i];
+      if (realR == null) {
+        continue;
+      }
+      this.renderEditRow(tbody, realR, cols, i);
     }
   }
 
@@ -2148,22 +2323,26 @@ class TableCsvView extends obsidian.TextFileView {
     }
     var cols = this.rows.length ? colCountOf(this.rows) : 0;
     var count =
-      this.mode === 'edit' ? Math.max(0, this.rows.length - 1) : (this.viewBody || []).length;
+      this.mode === 'edit'
+        ? (this.editIndex ? this.editIndex.length : Math.max(0, this.rows.length - 1))
+        : (this.viewBody || []).length;
     var rowH = this.rowHeightPx > 0 ? this.rowHeightPx : DEFAULT_ROW_PX;
     this.setVirtHeight(count * rowH);
     var slice = windowSlice(count, scroll.scrollTop, scroll.clientHeight, rowH, ROW_OVERSCAN);
     var start = slice.start;
     var end = slice.end;
     if (this.mode === 'edit' && this.selRow >= 1 && count > 0) {
-      var idx = this.selRow - 1;
-      if (idx >= count) {
-        idx = count - 1;
-      }
-      if (idx < start || idx >= end) {
-        var span = Math.max(1, end - start);
-        start = Math.max(0, idx - Math.floor(span / 4));
-        end = Math.min(count, start + span);
-        start = Math.max(0, end - span);
+      var idx = this.editIndex ? this.editIndex.indexOf(this.selRow) : this.selRow - 1;
+      if (idx >= 0) {
+        if (idx >= count) {
+          idx = count - 1;
+        }
+        if (idx < start || idx >= end) {
+          var span = Math.max(1, end - start);
+          start = Math.max(0, idx - Math.floor(span / 4));
+          end = Math.min(count, start + span);
+          start = Math.max(0, end - span);
+        }
       }
     }
     this.setBodyShift(start * rowH);
@@ -2184,6 +2363,11 @@ class TableCsvView extends obsidian.TextFileView {
   render() {
     var el = this.contentEl;
     var self = this;
+    if (this.mode === 'edit') {
+      this.buildEditIndex();
+    } else {
+      this.editIndex = null;
+    }
     el.empty();
     el.addClass('table-csv-view');
     el.toggleClass('is-edit', this.mode === 'edit');
@@ -2388,13 +2572,61 @@ class TableCsvView extends obsidian.TextFileView {
       deleteColBtn.addEventListener('click', function () {
         self.deleteCol();
       });
+
+      var editFilter = toolbar.createEl('input', {
+        type: 'search',
+        attr: {
+          placeholder: t('絞り込み', 'Filter', 'Filter'),
+          spellcheck: 'false',
+          autocomplete: 'off',
+          title: t(
+            '絞り込んだまま、表示中の行をそのまま直せます',
+            'Edit the visible rows while the filter stays on',
+            'Sichtbare Zeilen bei aktivem Filter direkt bearbeiten',
+          ),
+        },
+      });
+      editFilter.value = this.filter || '';
+      editFilter.addEventListener('compositionstart', function () {
+        self.filterComposing = true;
+      });
+      editFilter.addEventListener('compositionend', function () {
+        self.filterComposing = false;
+        self.applyFilterInput(editFilter);
+      });
+      editFilter.addEventListener('input', function (ev) {
+        self.filter = editFilter.value || '';
+        if (ev.isComposing || self.filterComposing) {
+          return;
+        }
+        self.applyFilterInput(editFilter);
+      });
+      if (this.keepFilterFocus) {
+        this.keepFilterFocus = false;
+        editFilter.focus();
+        var editPos = this.filterCaret;
+        if (typeof editPos === 'number') {
+          try {
+            var editLen = editFilter.value.length;
+            var editCaret = Math.max(0, Math.min(editLen, editPos));
+            editFilter.setSelectionRange(editCaret, editCaret);
+          } catch (e) {
+            /* ignore */
+          }
+        }
+      }
     }
 
     var rows = this.rows;
     var cols = rows.length ? colCountOf(rows) : 0;
     var body = this.mode === 'view' ? this.visibleBody() : [];
     var total = Math.max(0, rows.length - 1);
-    var shown = this.mode === 'view' ? body.length : total;
+    var shown =
+      this.mode === 'view'
+        ? body.length
+        : this.editIndex
+        ? this.editIndex.length
+        : total;
     var path = this.file ? this.file.path : t('(未保存)', '(unsaved)', '(ungespeichert)');
     var modeLabel =
       this.mode === 'edit'
@@ -2513,9 +2745,10 @@ class TableCsvView extends obsidian.TextFileView {
     }
   }
 
-  renderEditRow(tbody, r, cols) {
+  renderEditRow(tbody, r, cols, visualPos) {
+    var stripe = typeof visualPos === 'number' ? visualPos : r - 1;
     var tr = tbody.createEl('tr', { cls: 'table-csv-data-row' });
-    if ((r - 1) % 2 === 1) {
+    if (stripe % 2 === 1) {
       tr.addClass('is-even');
     }
     var gutter = tr.createEl('th', {
@@ -2637,7 +2870,7 @@ class TableCsvView extends obsidian.TextFileView {
             return;
           }
         }
-        var endPos = nextEditCell(self.selEndRow, self.selEndCol, self.rows.length, cols, key, false);
+        var endPos = nextEditCellFiltered(self.selEndRow, self.selEndCol, self.editNavRows(), cols, key, false);
         if (endPos.r === self.selEndRow && endPos.c === self.selEndCol) {
           ev.preventDefault();
           return;
@@ -2659,7 +2892,7 @@ class TableCsvView extends obsidian.TextFileView {
       if (arrowDir && (arrowDir === 'left' || arrowDir === 'right') && !shouldLeaveCell(el, arrowDir)) {
         return;
       }
-      var pos = nextEditCell(self.selRow, self.selCol, self.rows.length, cols, key, ev.shiftKey);
+      var pos = nextEditCellFiltered(self.selRow, self.selCol, self.editNavRows(), cols, key, ev.shiftKey);
       if (pos.r === self.selRow && pos.c === self.selCol) {
         if (key === 'Tab' || key === 'Enter' || arrowDir) {
           ev.preventDefault();
