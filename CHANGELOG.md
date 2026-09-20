@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.15.0
+
+- Edit while filtered: the filter box now stays in Edit. Type to keep only the matching rows on screen and change them in place. Moving with Tab, Enter, and arrows skips the hidden rows. Copy, cut, and clear only touch the rows you can see. A multi-row paste is refused while filtered, so hidden rows are never overwritten
+
+### 日本語
+
+- 絞り込んだまま直せる: 編集モードにも絞り込み欄を置いた。入力すると一致する行だけが残り、そのまま直せる。`Tab`・`Enter`・矢印は隠れている行を飛ばして進む。コピー・切り取り・クリアは見えている行だけに効く。絞り込み中の複数行貼り付けは断り、隠れた行を書き換えない
+
+### Deutsch
+
+- Bearbeiten bei aktivem Filter: Das Filterfeld bleibt jetzt auch im Bearbeiten-Modus. Nur die passenden Zeilen bleiben sichtbar und lassen sich direkt ändern. Tab, Enter und Pfeile überspringen die ausgeblendeten Zeilen. Kopieren, Ausschneiden und Leeren betreffen nur sichtbare Zeilen. Ein Einfügen mehrerer Zeilen wird bei aktivem Filter abgelehnt, damit ausgeblendete Zeilen nicht überschrieben werden
+
 ## 1.14.0
 
 - Edit: arrow keys move to the next cell when the caret is at the edge (or the whole cell is selected). Up and down always move. Shift+arrow extends a range. Escape clears the range

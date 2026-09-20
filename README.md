@@ -33,6 +33,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 - **View** mode: optional **Pin first column** so the leftmost column stays visible when scrolling sideways
 - **View** and **Edit**: drag a column header edge to set the width; that file keeps the widths
 - **View** mode: **Export filtered** writes the header plus currently visible rows to a new CSV in the same folder (the original file is unchanged)
+- **Edit** mode: the filter stays on, so you edit only the rows you searched for. Navigation, Copy, Cut, and Clear stay within the visible rows; hidden rows are never changed. A multi-row paste is refused while filtered
 - **Edit** mode: change cells, insert/delete rows and columns, then save to the vault. Tab / Enter move between cells without breaking IME composition. Arrow keys move when the caret is at the edge (up/down always). Shift+arrow extends a range. Escape clears the range. Undo the last edit with `Ctrl+Z` / `Cmd+Z`. Redo with `Ctrl+Y` / `Cmd+Shift+Z`. Drag or Shift-click to select a range; Copy, Cut, or Clear then apply to that range
 - **Copy** uses the OS clipboard (tab-separated). Paste into Excel, Notepad, or TextEdit. In Edit, a selected range is copied instead of the whole table. **Cut** copies then clears the range. **Clear** empties the cells and leaves the rows and columns
 - **Paste** (Edit mode): copy a range in Excel (or Word / a text table) and paste with `Ctrl+V` / `Cmd+V`, right-click Paste, or the toolbar. A 10×10 stays 10×10, starting at the selected cell
@@ -48,7 +49,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 2. Right-click a folder and choose **New CSV**, or run the same from the command palette. You can also open an existing `.csv`
 3. A new file opens in **Edit**. Existing files start in **View**. Type in the filter box to narrow matching rows. Click a column header to sort. Right-click a header to set the column type. Check **Pin last row** when the bottom row is a total you do not want moved. Check **Pin first column** when the table is wide and you want the leftmost column to stay put
 4. **Export filtered** creates a new CSV next to the current file with the header plus the rows you can see (filter, sort, and pin last row). The original file is not written
-5. Switch to **Edit** to change an existing file. The filter and sort are cleared so you edit the whole table
+5. Switch to **Edit** to change an existing file. The filter stays on, so you can change only the rows you searched for; hidden rows are not touched. Clear the filter box to edit the whole table. (Sort is not carried into Edit.) A multi-row paste is refused while filtered
 6. Insert or delete the selected row/column with the toolbar. **Undo** reverses the last edit. **Redo** brings it back. Click a cell to select it. Drag or Shift-click to select a range. **Cut** copies then clears that range. **Clear** or `Delete` empties it. Tab moves right, Enter moves down (Shift reverses). Arrows move when the caret is at the edge; up/down always. Shift+arrow extends the range. Escape clears it. Composition with an IME is left alone. Drag the edge of a column header to change its width
 7. **Copy** puts the table on the system clipboard. In View mode this is the header plus filtered rows. In Edit mode a selected range is copied; otherwise it is the whole table. **Cut** (`Ctrl+X` / `Cmd+X`) copies the range then clears those cells
 8. In **Edit**, select a cell and paste (`Ctrl+V` / `Cmd+V`, right-click Paste, or the toolbar **Paste** button). Excel, Word, and tab-separated text fill right and down from that cell. Extra rows and columns are added if the range is larger. A single copied cell still pastes into the selected cell only
@@ -64,7 +65,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.14.0** — arrow keys and Shift+arrow in Edit; Escape clears a range.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.15.0** — edit while filtered: the filter stays on in Edit, so you change only the rows you searched for.
 
 ### Author
 
@@ -103,6 +104,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 - **View（閲覧）**: **先頭列を固定** — 横スクロールしても左端の列を残す
 - **閲覧・編集**: 列見出しの端をドラッグして幅を決める。ファイルごとに覚える
 - **View（閲覧）**: **絞り込みを書き出す** — 見出しと表示中の行を同じフォルダの新しいCSVにする（元のファイルは変わらない）
+- **Edit（編集）**: 絞り込みがそのまま残るので、探した行だけを直せる。移動・コピー・切り取り・クリアは見えている行の中だけで動き、隠れた行は変えない。絞り込み中は複数行の貼り付けを断る
 - **Edit（編集）**: セルの変更、行・列の追加・削除。Vault内の同じCSVに保存する。`Tab` / `Enter` でセル移動（変換中は動かない）。矢印は端で隣へ（上下は常に）。`Shift`+矢印で範囲。`Esc` で解除。直前の編集は `Ctrl+Z` / `Cmd+Z` で取り消す。やり直すは `Ctrl+Y` / `Cmd+Shift+Z`。ドラッグまたは `Shift`+クリックで範囲を選び、コピー・切り取り・クリアはその範囲
 - **Copy（コピー）**: OSのクリップボードへ（タブ区切り）。Excel、メモ帳、TextEditに貼り付けできる。編集で範囲を選んでいるときは、その範囲だけ。**切り取り**はコピーしたあとセルを空にする。**クリア**はセルだけ空にして、行と列は残す
 - **Paste（貼り付け）**（編集モード）: Excel（または Word / テキストの表）で範囲をコピーし、`Ctrl+V` / `Cmd+V`、右クリックの貼り付け、またはツールバーで貼る。10×10 は 10×10 のまま、選んだセルから入る
@@ -118,7 +120,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 2. ファイル一覧のフォルダを右クリックして **CSVを新規作成**、またはコマンドパレットで同じ操作。既存の `.csv` を開いてもよい
 3. 新規ファイルは **Edit**。既存ファイルは最初 **View**。フィルター欄に文字を入れると行が絞り込まれる。列見出しをクリックすると並べ替え。列見出しを右クリックすると型を指定できる。**最下行を固定** にチェックすると、合計行など最後の1行は並べ替えされず下に残る。表が横に長いときは **先頭列を固定**
 4. **絞り込みを書き出す** で、見出しと今見えている行（絞り込み・並べ替え・最下行固定）を同じフォルダの新しいCSVにする。元のファイルは書き込まない
-5. 既存ファイルを直すときは **Edit** に切り替える。フィルターとソートは解除され、表全体を編集する
+5. 既存ファイルを直すときは **Edit** に切り替える。絞り込みはそのまま残るので、探した行だけを直せる。隠れている行には触れない。絞り込み欄を空にすると表全体を編集できる（ソートは Edit に持ち越さない）。絞り込み中は複数行の貼り付けを断る
 6. ツールバーで選択中の行・列を追加・削除する。**元に戻す** で直前の編集を取り消す。**やり直す** で戻す。セルをクリックして選ぶ。ドラッグまたは `Shift`+クリックで範囲を選ぶ。**切り取り**はその範囲をコピーして空にする。**クリア**または `Delete` は空にするだけ。`Tab` で右、`Enter` で下へ進む（`Shift` で逆）。矢印は端で隣へ（上下は常に）。`Shift`+矢印で範囲。`Esc` で解除。変換中は動かない。列見出しの端をドラッグすると幅が変わる
 7. **Copy** で表をクリップボードへ送る。Viewでは見出し＋絞り込み後の行。Editでは範囲があればその範囲、なければ表全体。**切り取り**（`Ctrl+X` / `Cmd+X`）は範囲をコピーしてからセルを空にする
 8. **Edit** でセルを選んで貼る（`Ctrl+V` / `Cmd+V`、右クリックの貼り付け、またはツールバーの **貼り付け**）。Excel・Word・タブ区切りは、そのセルから右下へ入る。範囲が大きければ行・列を足す。1セルだけのコピーは、そのセルだけに入る
@@ -134,7 +136,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.14.0** — 編集で矢印と `Shift`+矢印。`Esc` で範囲を解除。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.15.0** — 絞り込んだまま直せる。編集でも絞り込みが残り、探した行だけを直せる。
 
 ### 作者
 
@@ -176,6 +178,7 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 - **Ansicht**: optional **Erste Spalte anheften**, damit sie beim seitlichen Scrollen sichtbar bleibt
 - **Ansicht und Bearbeiten**: Spaltenbreite am Kopfzeilenrand ziehen; bleibt pro Datei erhalten
 - **Ansicht**: **Filter exportieren** schreibt Kopfzeile und sichtbare Zeilen in eine neue CSV im gleichen Ordner (Original bleibt unverändert)
+- **Bearbeiten**: Der Filter bleibt aktiv, du änderst nur die gesuchten Zeilen. Navigation, Kopieren, Ausschneiden und Leeren bleiben in den sichtbaren Zeilen; ausgeblendete Zeilen werden nie verändert. Ein Einfügen mehrerer Zeilen wird bei aktivem Filter abgelehnt
 - **Bearbeiten**: Zellen, Zeilen und Spalten ändern und in die gleiche Datei speichern. Tab / Enter wechseln die Zelle, ohne die IME-Eingabe zu stören. Pfeiltasten am Rand, Hoch/Runter immer. Umschalt+Pfeil erweitert die Auswahl. Escape hebt sie auf. Letzte Änderung mit `Strg+Z` / `Cmd+Z` rückgängig. Wiederholen mit `Strg+Y` / `Cmd+Umschalt+Z`. Ziehen oder Umschalt+Klick wählt einen Bereich; Kopieren, Ausschneiden oder Leeren gilt dann für diesen Bereich
 - Speichern behält Trennzeichen, Anführungszeichen-Stil, Zeilenenden und UTF-8-BOM
 - **Kopieren** / **Einfügen** über die Systemzwischenablage
@@ -186,7 +189,7 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 
 ### Versionshinweise
 
-Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.14.0** — Pfeiltasten und Umschalt+Pfeil im Bearbeiten; Escape hebt die Auswahl auf.
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.15.0** — Bearbeiten bei aktivem Filter: Der Filter bleibt im Bearbeiten-Modus, du änderst nur die gesuchten Zeilen.
 
 ### Lizenz
 
