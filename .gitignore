@@ -3,3 +3,6 @@
 .AppleDouble
 .LSOverride
 __MACOSX/
+
+# Cursor ops live in K-Tech Communication Network (private)
+.cursor/
