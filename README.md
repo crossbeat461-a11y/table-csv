@@ -33,6 +33,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 - **View** mode: optional **Pin first column** so the leftmost column stays visible when scrolling sideways
 - **View** and **Edit**: drag a column header edge to set the width; that file keeps the widths
 - **View** mode: **Export filtered** writes the header plus currently visible rows to a new CSV in the same folder (the original file is unchanged)
+- **View** mode (desktop): click or drag to select cells; Shift-click extends, Ctrl-click (Cmd-click on Mac) adds a separate cell or range, Escape clears. A status bar at the bottom shows sum, average, and count for numbers, or only the count for text. A mix of numbers and text shows nothing. Blanks are counted and listed, e.g. "Count: 7 (blank: 1)". The pinned last row is never selected, so a totals row is not counted twice. Copy / `Ctrl+C` / `Cmd+C` copies the selected range
 - **Edit** mode: the filter stays on, so you edit only the rows you searched for. Navigation, Copy, Cut, and Clear stay within the visible rows; hidden rows are never changed. A multi-row paste is refused while filtered
 - **Edit** mode: change cells, insert/delete rows and columns, then save to the vault. Tab / Enter move between cells without breaking IME composition. Arrow keys move when the caret is at the edge (up/down always). Shift+arrow extends a range. Escape clears the range. Undo the last edit with `Ctrl+Z` / `Cmd+Z`. Redo with `Ctrl+Y` / `Cmd+Shift+Z`. Drag or Shift-click to select a range; Copy, Cut, or Clear then apply to that range
 - **Copy** uses the OS clipboard (tab-separated). Paste into Excel, Notepad, or TextEdit. In Edit, a selected range is copied instead of the whole table. **Cut** copies then clears the range. **Clear** empties the cells and leaves the rows and columns
@@ -65,7 +66,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **1.15.0** — edit while filtered: the filter stays on in Edit, so you change only the rows you searched for.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **2.0.0** — select cells in View and see sum, average, and count in a status bar at the bottom (desktop).
 
 ### Author
 
@@ -104,6 +105,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 - **View（閲覧）**: **先頭列を固定** — 横スクロールしても左端の列を残す
 - **閲覧・編集**: 列見出しの端をドラッグして幅を決める。ファイルごとに覚える
 - **View（閲覧）**: **絞り込みを書き出す** — 見出しと表示中の行を同じフォルダの新しいCSVにする（元のファイルは変わらない）
+- **View（閲覧）**（デスクトップ）: セルをクリック・ドラッグで選ぶ。`Shift`+クリックで広げ、`Ctrl`+クリック（Mac は `Cmd`+クリック）で離れたセルや範囲を足し、`Esc` で解除。最下部のステータスバーに、数値なら合計・平均・個数、文字列なら個数だけを出す。数値と文字列が混ざると何も出さない。空白も数え、「個数: 7（うち空白 1）」と内訳を出す。最下行を固定した行は選べないので、合計行を二重に数えない。コピー・`Ctrl+C` / `Cmd+C` は選んだ範囲をコピーする
 - **Edit（編集）**: 絞り込みがそのまま残るので、探した行だけを直せる。移動・コピー・切り取り・クリアは見えている行の中だけで動き、隠れた行は変えない。絞り込み中は複数行の貼り付けを断る
 - **Edit（編集）**: セルの変更、行・列の追加・削除。Vault内の同じCSVに保存する。`Tab` / `Enter` でセル移動（変換中は動かない）。矢印は端で隣へ（上下は常に）。`Shift`+矢印で範囲。`Esc` で解除。直前の編集は `Ctrl+Z` / `Cmd+Z` で取り消す。やり直すは `Ctrl+Y` / `Cmd+Shift+Z`。ドラッグまたは `Shift`+クリックで範囲を選び、コピー・切り取り・クリアはその範囲
 - **Copy（コピー）**: OSのクリップボードへ（タブ区切り）。Excel、メモ帳、TextEditに貼り付けできる。編集で範囲を選んでいるときは、その範囲だけ。**切り取り**はコピーしたあとセルを空にする。**クリア**はセルだけ空にして、行と列は残す
@@ -136,7 +138,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **1.15.0** — 絞り込んだまま直せる。編集でも絞り込みが残り、探した行だけを直せる。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **2.0.0** — 閲覧でセルを選ぶと、最下部のステータスバーに合計・平均・個数が出る（デスクトップ）。
 
 ### 作者
 
@@ -178,6 +180,7 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 - **Ansicht**: optional **Erste Spalte anheften**, damit sie beim seitlichen Scrollen sichtbar bleibt
 - **Ansicht und Bearbeiten**: Spaltenbreite am Kopfzeilenrand ziehen; bleibt pro Datei erhalten
 - **Ansicht**: **Filter exportieren** schreibt Kopfzeile und sichtbare Zeilen in eine neue CSV im gleichen Ordner (Original bleibt unverändert)
+- **Ansicht** (Desktop): Zellen per Klick oder Ziehen wählen; Umschalt+Klick erweitert, Strg+Klick (Cmd+Klick auf dem Mac) fügt eine getrennte Zelle oder einen Bereich hinzu, Escape hebt auf. Eine Statusleiste unten zeigt bei Zahlen Summe, Mittelwert und Anzahl, bei Text nur die Anzahl. Bei Zahlen und Text gemischt zeigt sie nichts. Leere Zellen werden mitgezählt, z. B. „Anzahl: 7 (davon leer: 1)“. Die angeheftete letzte Zeile wird nie gewählt, eine Summenzeile zählt also nicht doppelt. Kopieren / `Strg+C` / `Cmd+C` kopiert den gewählten Bereich
 - **Bearbeiten**: Der Filter bleibt aktiv, du änderst nur die gesuchten Zeilen. Navigation, Kopieren, Ausschneiden und Leeren bleiben in den sichtbaren Zeilen; ausgeblendete Zeilen werden nie verändert. Ein Einfügen mehrerer Zeilen wird bei aktivem Filter abgelehnt
 - **Bearbeiten**: Zellen, Zeilen und Spalten ändern und in die gleiche Datei speichern. Tab / Enter wechseln die Zelle, ohne die IME-Eingabe zu stören. Pfeiltasten am Rand, Hoch/Runter immer. Umschalt+Pfeil erweitert die Auswahl. Escape hebt sie auf. Letzte Änderung mit `Strg+Z` / `Cmd+Z` rückgängig. Wiederholen mit `Strg+Y` / `Cmd+Umschalt+Z`. Ziehen oder Umschalt+Klick wählt einen Bereich; Kopieren, Ausschneiden oder Leeren gilt dann für diesen Bereich
 - Speichern behält Trennzeichen, Anführungszeichen-Stil, Zeilenenden und UTF-8-BOM
@@ -189,7 +192,7 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 
 ### Versionshinweise
 
-Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **1.15.0** — Bearbeiten bei aktivem Filter: Der Filter bleibt im Bearbeiten-Modus, du änderst nur die gesuchten Zeilen.
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **2.0.0** — Zellen in der Ansicht auswählen, unten zeigt eine Statusleiste Summe, Mittelwert und Anzahl (Desktop).
 
 ### Lizenz
 

@@ -577,6 +577,44 @@ function parseSortNumber(s) {
   };
 }
 
+// Totals for the status bar. Numbers and text in one selection are "mixed"
+// and get no totals; blank cells are counted but never make it mixed.
+function summarizeCells(rows) {
+  var out = { count: 0, blanks: 0, numeric: 0, text: 0, sum: 0, mixed: false };
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    for (var j = 0; j < row.length; j++) {
+      out.count++;
+      var key = cellSortKey(row[j]);
+      if (!key) {
+        out.blanks++;
+        continue;
+      }
+      var num = parseSortNumber(key);
+      if (num.ok) {
+        out.numeric++;
+        out.sum += num.n;
+      } else {
+        out.text++;
+      }
+    }
+  }
+  out.mixed = out.numeric > 0 && out.text > 0;
+  return out;
+}
+
+function formatStatNumber(n) {
+  if (!Number.isFinite(n)) {
+    return String(n);
+  }
+  var locale = isGermanNumeric() ? 'de-DE' : uiLang() === 'ja' ? 'ja-JP' : 'en-US';
+  try {
+    return n.toLocaleString(locale, { maximumFractionDigits: 6 });
+  } catch (e) {
+    return String(Math.round(n * 1e6) / 1e6);
+  }
+}
+
 function compareCells(a, b) {
   var sa = cellSortKey(a);
   var sb = cellSortKey(b);
@@ -917,6 +955,186 @@ class TableCsvView extends obsidian.TextFileView {
     this.sizerEl = null;
     this.bodyTableEl = null;
     this.layoutColPx = [];
+    // View-mode cell selection. Anchors hold the real row index (item.index)
+    // so a sort or repaint never moves the selection to other rows.
+    this.vRanges = [];
+    this.vAnchor = null;
+    this.vEnd = null;
+    this.vDrag = false;
+    this.viewPos = null;
+    this.statusEl = null;
+    this.statusQueued = 0;
+  }
+
+  viewSelectable() {
+    return this.mode === 'view' && !obsidian.Platform.isMobile;
+  }
+
+  clearViewSel() {
+    this.vRanges = [];
+    this.vAnchor = null;
+    this.vEnd = null;
+    this.vDrag = false;
+  }
+
+  // Display positions (viewBody indices) and columns covered by one view range.
+  viewRangeBounds(a, e) {
+    if (!a || !e || !this.viewPos) {
+      return null;
+    }
+    var pA = this.viewPos.get(a.index);
+    var pB = this.viewPos.get(e.index);
+    if (pA == null || pB == null) {
+      return null;
+    }
+    var cols = colCountOf(this.rows);
+    var c0 = Math.max(0, Math.min(cols - 1, Math.min(a.col, e.col)));
+    var c1 = Math.max(0, Math.min(cols - 1, Math.max(a.col, e.col)));
+    return { p0: Math.min(pA, pB), p1: Math.max(pA, pB), c0: c0, c1: c1 };
+  }
+
+  // Ranges added with Ctrl/Cmd+click, then the one being drawn now.
+  viewSelBoundsList() {
+    var list = [];
+    var ranges = (this.vRanges || []).concat([{ a: this.vAnchor, e: this.vEnd }]);
+    for (var i = 0; i < ranges.length; i++) {
+      var b = this.viewRangeBounds(ranges[i].a, ranges[i].e);
+      if (b) {
+        list.push(b);
+      }
+    }
+    return list;
+  }
+
+  viewSelBounds() {
+    var list = this.viewSelBoundsList();
+    return list.length === 1 ? list[0] : null;
+  }
+
+  viewSelContains(list, p, c) {
+    for (var i = 0; i < list.length; i++) {
+      var b = list[i];
+      if (p >= b.p0 && p <= b.p1 && c >= b.c0 && c <= b.c1) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  hasViewRange() {
+    var list = this.viewSelBoundsList();
+    if (list.length > 1) {
+      return true;
+    }
+    var b = list[0];
+    return !!b && (b.p0 !== b.p1 || b.c0 !== b.c1);
+  }
+
+  // Every selected cell once, even where ranges overlap.
+  valuesFromViewSel() {
+    var list = this.viewSelBoundsList();
+    var body = this.viewBody || [];
+    var seen = new Set();
+    var out = [];
+    for (var i = 0; i < list.length; i++) {
+      var b = list[i];
+      for (var p = b.p0; p <= b.p1; p++) {
+        var item = body[p];
+        if (!item) {
+          continue;
+        }
+        for (var c = b.c0; c <= b.c1; c++) {
+          var key = p + ':' + c;
+          if (seen.has(key)) {
+            continue;
+          }
+          seen.add(key);
+          out.push(String(item.row[c] == null ? '' : item.row[c]));
+        }
+      }
+    }
+    return out.length ? [out] : [];
+  }
+
+  rowsFromViewRange() {
+    var b = this.viewSelBounds();
+    var out = [];
+    if (!b) {
+      return out;
+    }
+    var body = this.viewBody || [];
+    for (var p = b.p0; p <= b.p1; p++) {
+      var item = body[p];
+      if (!item) {
+        continue;
+      }
+      var row = [];
+      for (var c = b.c0; c <= b.c1; c++) {
+        row.push(String(item.row[c] == null ? '' : item.row[c]));
+      }
+      out.push(row);
+    }
+    return out;
+  }
+
+  paintViewSelection() {
+    if (!this.tbodyEl) {
+      return;
+    }
+    var self = this;
+    var list = this.viewSelBoundsList();
+    this.tbodyEl.querySelectorAll('td[data-vpos]').forEach(function (n) {
+      var p = Number(n.getAttribute('data-vpos'));
+      var c = Number(n.getAttribute('data-col'));
+      n.toggleClass('is-in-range', self.viewSelContains(list, p, c));
+    });
+    this.queueViewStatus();
+  }
+
+  queueViewStatus() {
+    if (this.statusQueued) {
+      return;
+    }
+    var self = this;
+    this.statusQueued = window.requestAnimationFrame(function () {
+      self.statusQueued = 0;
+      self.updateViewStatus();
+    });
+  }
+
+  updateViewStatus() {
+    var bar = this.statusEl;
+    if (!bar) {
+      return;
+    }
+    bar.empty();
+    var values = this.valuesFromViewSel();
+    if (!values.length) {
+      return;
+    }
+    var stats = summarizeCells(values);
+    if (stats.mixed) {
+      return;
+    }
+    if (stats.numeric > 0) {
+      bar.createSpan({
+        cls: 'table-csv-status-item',
+        text: t('合計', 'Sum', 'Summe') + ': ' + formatStatNumber(stats.sum),
+      });
+      bar.createSpan({
+        cls: 'table-csv-status-item',
+        text: t('平均', 'Average', 'Mittelwert') + ': ' + formatStatNumber(stats.sum / stats.numeric),
+      });
+    }
+    var countText = t('個数', 'Count', 'Anzahl') + ': ' + String(stats.count);
+    if (stats.blanks > 0) {
+      countText += t(
+        '（うち空白 ' + stats.blanks + '）',
+        ' (blank: ' + stats.blanks + ')',
+        ' (davon leer: ' + stats.blanks + ')',
+      );
+    }
+    bar.createSpan({ cls: 'table-csv-status-item', text: countText });
   }
 
   syncViewLeafClass() {
@@ -947,6 +1165,10 @@ class TableCsvView extends obsidian.TextFileView {
         if (self.scrollPaintQueued) {
           window.cancelAnimationFrame(self.scrollPaintQueued);
           self.scrollPaintQueued = 0;
+        }
+        if (self.statusQueued) {
+          window.cancelAnimationFrame(self.statusQueued);
+          self.statusQueued = 0;
         }
         if (self.leafHostEl) {
           self.leafHostEl.removeClass('is-csv-view-mode');
@@ -1036,6 +1258,79 @@ class TableCsvView extends obsidian.TextFileView {
     });
     this.registerDomEvent(window, 'mouseup', function () {
       self.rangeDrag = false;
+      self.vDrag = false;
+    });
+    this.registerDomEvent(this.contentEl, 'mousedown', function (ev) {
+      if (!self.viewSelectable() || ev.button !== 0) {
+        return;
+      }
+      var cell = ev.target && ev.target.closest ? ev.target.closest('td[data-vpos]') : null;
+      if (!cell || !self.contentEl.contains(cell)) {
+        return;
+      }
+      var p = Number(cell.getAttribute('data-vpos'));
+      var c = Number(cell.getAttribute('data-col'));
+      var item = (self.viewBody || [])[p];
+      if (!item || !isFinite(c)) {
+        return;
+      }
+      ev.preventDefault();
+      if (self.scrollEl) {
+        self.scrollEl.focus({ preventScroll: true });
+      }
+      var hit = { index: item.index, col: c };
+      if (ev.shiftKey && self.vAnchor) {
+        self.vEnd = hit;
+      } else if ((ev.ctrlKey || ev.metaKey) && self.vAnchor) {
+        self.vRanges.push({ a: self.vAnchor, e: self.vEnd });
+        self.vAnchor = hit;
+        self.vEnd = hit;
+      } else {
+        self.vRanges = [];
+        self.vAnchor = hit;
+        self.vEnd = hit;
+      }
+      self.vDrag = true;
+      self.paintViewSelection();
+    });
+    this.registerDomEvent(this.contentEl, 'mousemove', function (ev) {
+      if (!self.vDrag || !self.viewSelectable()) {
+        return;
+      }
+      if ((ev.buttons & 1) === 0) {
+        self.vDrag = false;
+        return;
+      }
+      var cell = ev.target && ev.target.closest ? ev.target.closest('td[data-vpos]') : null;
+      if (!cell || !self.contentEl.contains(cell)) {
+        return;
+      }
+      var item = (self.viewBody || [])[Number(cell.getAttribute('data-vpos'))];
+      var c = Number(cell.getAttribute('data-col'));
+      if (!item || !isFinite(c)) {
+        return;
+      }
+      if (self.vEnd && self.vEnd.index === item.index && self.vEnd.col === c) {
+        return;
+      }
+      self.vEnd = { index: item.index, col: c };
+      self.paintViewSelection();
+    });
+    this.registerDomEvent(this.contentEl, 'keydown', function (ev) {
+      if (!self.viewSelectable() || isFilterSearchTarget(ev) || ev.altKey) {
+        return;
+      }
+      if (ev.key === 'Escape' && self.vAnchor) {
+        ev.preventDefault();
+        self.clearViewSel();
+        self.paintViewSelection();
+        return;
+      }
+      var key = String(ev.key || '').toLowerCase();
+      if ((ev.ctrlKey || ev.metaKey) && !ev.shiftKey && key === 'c' && self.hasViewRange()) {
+        ev.preventDefault();
+        void self.copyTable();
+      }
     });
     this.registerDomEvent(
       this.contentEl,
@@ -1112,6 +1407,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.cellUndoPushed = false;
     this.loadColWidths();
     this.loadColTypes();
+    this.clearViewSel();
     if (clear) {
       this.filter = '';
       this.mode = 'view';
@@ -1676,6 +1972,9 @@ class TableCsvView extends obsidian.TextFileView {
     if (this.mode === 'edit' && this.hasCellRange()) {
       return this.rowsFromRange();
     }
+    if (this.mode === 'view' && this.hasViewRange()) {
+      return this.rowsFromViewRange();
+    }
     if (this.mode === 'view') {
       var header = this.rows.length ? [this.rows[0]] : [];
       var body = this.visibleBody().map(function (item) {
@@ -1727,7 +2026,17 @@ class TableCsvView extends obsidian.TextFileView {
   }
 
   async copyTable() {
-    var ranged = this.mode === 'edit' && this.hasCellRange();
+    if (this.mode === 'view' && this.viewSelBoundsList().length > 1) {
+      new obsidian.Notice(
+        t(
+          '離れた複数の範囲はコピーできません。1つの範囲を選んでください',
+          'Cannot copy multiple separate ranges. Select one range',
+          'Mehrere getrennte Bereiche können nicht kopiert werden. Wähle einen Bereich',
+        ),
+      );
+      return;
+    }
+    var ranged = (this.mode === 'edit' && this.hasCellRange()) || (this.mode === 'view' && this.hasViewRange());
     var ok = ranged
       ? t('選択範囲をコピーしました', 'Copied selection', 'Auswahl kopiert')
       : t('表をコピーしました', 'Copied table', 'Tabelle kopiert');
@@ -1985,6 +2294,7 @@ class TableCsvView extends obsidian.TextFileView {
     } else {
       this.persist();
     }
+    this.clearViewSel();
     this.mode = mode;
     this.render();
   }
@@ -2194,6 +2504,7 @@ class TableCsvView extends obsidian.TextFileView {
       this.sortCol = col;
       this.sortDir = 'asc';
     }
+    this.clearViewSel();
     this.savedScrollTop = 0;
     this.render();
   }
@@ -2202,6 +2513,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.filter = input.value || '';
     this.filterCaret = input.selectionStart;
     this.keepFilterFocus = true;
+    this.clearViewSel();
     this.savedScrollTop = 0;
     this.render();
   }
@@ -2275,6 +2587,8 @@ class TableCsvView extends obsidian.TextFileView {
   paintViewRows(tbody, cols, start, end) {
     var body = this.viewBody || [];
     var lastPinnedIndex = this.pinLastRow && this.rows.length > 1 ? this.rows.length - 1 : null;
+    var selectable = this.viewSelectable();
+    var selList = selectable ? this.viewSelBoundsList() : [];
     var i;
     for (i = start; i < end; i++) {
       var item = body[i];
@@ -2285,19 +2599,27 @@ class TableCsvView extends obsidian.TextFileView {
       if (i % 2 === 1) {
         tr.addClass('is-even');
       }
-      tr.toggleClass('is-pinned', lastPinnedIndex != null && item.index === lastPinnedIndex);
+      var pinned = lastPinnedIndex != null && item.index === lastPinnedIndex;
+      tr.toggleClass('is-pinned', pinned);
+      // A pinned totals row is never selectable, so it is not counted twice.
+      var cellSelectable = selectable && !pinned;
       var c;
       for (c = 0; c < cols; c++) {
         var val = String(item.row[c] == null ? '' : item.row[c]);
+        var cell;
         if (this.colTypeAt(c) === 'checkbox') {
-          var checkTd = tr.createEl('td', { cls: 'table-csv-check-cell', attr: { title: val } });
-          checkTd.toggleClass('is-frozen-col', this.pinFirstCol && c === 0);
-          var viewBox = checkTd.createEl('input', { type: 'checkbox' });
+          cell = tr.createEl('td', { cls: 'table-csv-check-cell', attr: { title: val } });
+          var viewBox = cell.createEl('input', { type: 'checkbox' });
           viewBox.checked = isCheckedValue(val);
           viewBox.disabled = true;
         } else {
-          var td = tr.createEl('td', { text: val, attr: { title: val } });
-          td.toggleClass('is-frozen-col', this.pinFirstCol && c === 0);
+          cell = tr.createEl('td', { text: val, attr: { title: val } });
+        }
+        cell.toggleClass('is-frozen-col', this.pinFirstCol && c === 0);
+        if (cellSelectable) {
+          cell.setAttribute('data-vpos', String(i));
+          cell.setAttribute('data-col', String(c));
+          cell.toggleClass('is-in-range', this.viewSelContains(selList, i, c));
         }
       }
     }
@@ -2369,9 +2691,11 @@ class TableCsvView extends obsidian.TextFileView {
       this.editIndex = null;
     }
     el.empty();
+    this.statusEl = null;
     el.addClass('table-csv-view');
     el.toggleClass('is-edit', this.mode === 'edit');
     el.toggleClass('is-view', this.mode === 'view');
+    el.toggleClass('is-cell-select', this.viewSelectable());
     el.toggleClass('is-pin-first-col', this.mode === 'view' && this.pinFirstCol);
     this.syncViewLeafClass();
 
@@ -2445,6 +2769,7 @@ class TableCsvView extends obsidian.TextFileView {
       );
       pinCheck.addEventListener('change', function () {
         self.pinLastRow = pinCheck.checked;
+        self.clearViewSel();
         self.render();
       });
 
@@ -2723,6 +3048,14 @@ class TableCsvView extends obsidian.TextFileView {
     this.applyColgroup(bodyTable, cols);
     var tbody = bodyTable.createEl('tbody');
     this.viewBody = this.mode === 'view' ? body : [];
+    this.viewPos = null;
+    if (this.viewSelectable()) {
+      this.viewPos = new Map();
+      for (var vp = 0; vp < body.length; vp++) {
+        this.viewPos.set(body[vp].index, vp);
+      }
+      scroll.setAttribute('tabindex', '-1');
+    }
     this.headWrapEl = headWrap;
     this.headTableEl = headTable;
     this.scrollEl = scroll;
@@ -2742,6 +3075,10 @@ class TableCsvView extends obsidian.TextFileView {
         this.headWrapEl.scrollLeft = this.savedScrollLeft;
       }
       this.paintRows();
+    }
+    if (this.viewSelectable()) {
+      this.statusEl = el.createDiv({ cls: 'table-csv-statusbar' });
+      this.updateViewStatus();
     }
   }
 

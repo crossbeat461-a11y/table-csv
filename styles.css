@@ -1,4 +1,4 @@
-/* TableCSV 1.15.0 */
+/* TableCSV 2.0.0 */
 html body .workspace-leaf-content[data-type="csv"].is-csv-view-mode {
   overflow: hidden;
   display: flex;
@@ -93,6 +93,15 @@ html body .table-csv-view.is-edit .table-csv-scroll {
   scrollbar-gutter: stable;
   scrollbar-width: auto;
   scrollbar-color: var(--text-muted) var(--background-secondary);
+}
+
+html body .table-csv-view.is-view.is-cell-select .table-csv-scroll {
+  height: calc(100vh - 16rem);
+  max-height: calc(100vh - 16rem);
+}
+
+.table-csv-view.is-cell-select .table-csv-scroll:focus {
+  outline: none;
 }
 
 html body .table-csv-view.is-view .table-csv-scroll::-webkit-scrollbar,
@@ -265,6 +274,35 @@ html body .table-csv-view.is-view .table-csv-table tbody tr.is-pinned td.is-froz
 
 .table-csv-table tr.is-even td.is-in-range {
   background: var(--background-modifier-hover);
+}
+
+.table-csv-view.is-cell-select .table-csv-body-table td {
+  user-select: none;
+  cursor: cell;
+}
+
+html body .table-csv-view.is-view .table-csv-body-table tbody tr td.is-in-range,
+html body .table-csv-view.is-view .table-csv-body-table tbody tr.is-even td.is-in-range {
+  background: var(--text-selection);
+}
+
+html body .table-csv-view.is-view .table-csv-body-table tbody tr td.is-frozen-col.is-in-range,
+html body .table-csv-view.is-view .table-csv-body-table tbody tr.is-even td.is-frozen-col.is-in-range {
+  background: linear-gradient(var(--text-selection), var(--text-selection)), var(--background-primary);
+}
+
+.table-csv-statusbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.5em;
+  flex-shrink: 0;
+  min-height: 1.8em;
+  margin-top: 4px;
+  padding: 2px 8px;
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  border-top: 1px solid var(--background-modifier-border);
 }
 
 .table-csv-cell-input {

@@ -1,5 +1,29 @@
 # Changelog
 
+## 2.0.0
+
+- View: click or drag to select cells. Shift+click extends the range. Ctrl+click (Cmd+click on Mac) adds a separate cell or range; drag or Shift+click from there to grow it. The totals cover all ranges, and a cell where ranges overlap counts once. The range is lightly highlighted. Escape clears it
+- Status bar at the bottom of View. If every filled cell in the range is a number, it shows sum, average, and count. If the range is all text, it shows only the count. A mix of numbers and text shows nothing. Blank cells are counted and listed, e.g. "Count: 7 (blank: 1)". The average uses the number cells only
+- The pinned last row is not part of the selection, so a totals row is never counted twice
+- Copy and Ctrl+C / Cmd+C in View copy only the selected range when it has more than one cell. Separate ranges added with Ctrl+click are not copied; a notice asks for one range
+- Desktop only. On mobile, View works as before
+
+### 日本語
+
+- 閲覧: セルをクリック・ドラッグで選べる。`Shift`+クリックで範囲を広げる。`Ctrl`+クリック（Mac は `Cmd`+クリック）で離れたセルや範囲を追加でき、そこからドラッグや `Shift`+クリックで広げられる。集計はすべての範囲を合わせて出し、範囲が重なったセルは1回だけ数える。選んだ範囲は薄く色が付く。`Esc` で解除
+- 閲覧の最下部にステータスバー。範囲内の入力済みセルがすべて数値なら合計・平均・個数、すべて文字列なら個数だけを出す。数値と文字列が混ざると何も出さない。空白も個数に入れ、「個数: 7（うち空白 1）」のように内訳を出す。平均は数値のセルだけで出す
+- 最終行固定の行は選べないので、合計行を二重に数えない
+- 2 セル以上を選んでいるとき、閲覧のコピーと `Ctrl+C` / `Cmd+C` は選んだ範囲だけをコピーする。`Ctrl`+クリックで離れた範囲を足しているときはコピーせず、1つの範囲を選ぶよう知らせる
+- デスクトップのみ。モバイルの閲覧はこれまでどおり
+
+### Deutsch
+
+- Ansicht: Zellen per Klick oder Ziehen auswählen. Umschalt+Klick erweitert den Bereich. Strg+Klick (Cmd+Klick auf dem Mac) fügt eine getrennte Zelle oder einen Bereich hinzu; von dort mit Ziehen oder Umschalt+Klick erweitern. Die Werte gelten für alle Bereiche, eine Zelle in überlappenden Bereichen zählt nur einmal. Der Bereich wird leicht hervorgehoben. Escape hebt ihn auf
+- Statusleiste unten in der Ansicht. Sind alle gefüllten Zellen Zahlen, zeigt sie Summe, Mittelwert und Anzahl. Ist alles Text, nur die Anzahl. Bei Zahlen und Text gemischt zeigt sie nichts. Leere Zellen werden mitgezählt und ausgewiesen, z. B. „Anzahl: 7 (davon leer: 1)“. Der Mittelwert nutzt nur die Zahlenzellen
+- Die fixierte letzte Zeile gehört nie zur Auswahl, eine Summenzeile wird also nicht doppelt gezählt
+- Kopieren und Strg+C / Cmd+C kopieren in der Ansicht nur den gewählten Bereich, wenn er mehr als eine Zelle hat. Getrennte Bereiche (Strg+Klick) werden nicht kopiert; ein Hinweis bittet um einen Bereich
+- Nur Desktop. Auf Mobilgeräten bleibt die Ansicht wie bisher
+
 ## 1.15.0
 
 - Edit while filtered: the filter box now stays in Edit. Type to keep only the matching rows on screen and change them in place. Moving with Tab, Enter, and arrows skips the hidden rows. Copy, cut, and clear only touch the rows you can see. A multi-row paste is refused while filtered, so hidden rows are never overwritten
