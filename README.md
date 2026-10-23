@@ -28,6 +28,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 - Sticky header row for easier scrolling
 - **View** mode: text filter to narrow rows (does not change the file)
 - **View** mode: click a column header to sort (asc → desc → clear; does not change the file)
+- **View** and **Edit**: a filter row under the header narrows that column only (text contains; number or date min/max; checkbox all / on / off / blank). Combined with the search box. Not written into the CSV
 - **View** and **Edit**: right-click a column header to set the type (text, number, date, checkbox). The type is remembered for that file and is not written into the CSV
 - **View** mode: optional **Pin last row** for CSVs with a totals row at the bottom (keeps that row out of sort)
 - **View** mode: optional **Pin first column** so the leftmost column stays visible when scrolling sideways
@@ -48,8 +49,8 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 1. Install **TableCSV** from Community plugins and enable it
 2. Right-click a folder and choose **New CSV**, or run the same from the command palette. You can also open an existing `.csv`
-3. A new file opens in **Edit**. Existing files start in **View**. Type in the filter box to narrow matching rows. Click a column header to sort. Right-click a header to set the column type. Check **Pin last row** when the bottom row is a total you do not want moved. Check **Pin first column** when the table is wide and you want the leftmost column to stay put
-4. **Export filtered** creates a new CSV next to the current file with the header plus the rows you can see (filter, sort, and pin last row). The original file is not written
+3. A new file opens in **Edit**. Existing files start in **View**. Type in the filter box to narrow matching rows. Use the row under the header to filter that column. Click a column header to sort. Right-click a header to set the column type. Check **Pin last row** when the bottom row is a total you do not want moved. Check **Pin first column** when the table is wide and you want the leftmost column to stay put
+4. **Export filtered** creates a new CSV next to the current file with the header plus the rows you can see (search, column filters, sort, and pin last row). The original file is not written
 5. Switch to **Edit** to change an existing file. The filter stays on, so you can change only the rows you searched for; hidden rows are not touched. Clear the filter box to edit the whole table. (Sort is not carried into Edit.) A multi-row paste is refused while filtered
 6. Insert or delete the selected row/column with the toolbar. **Undo** reverses the last edit. **Redo** brings it back. Click a cell to select it. Drag or Shift-click to select a range. **Cut** copies then clears that range. **Clear** or `Delete` empties it. Tab moves right, Enter moves down (Shift reverses). Arrows move when the caret is at the edge; up/down always. Shift+arrow extends the range. Escape clears it. Composition with an IME is left alone. Drag the edge of a column header to change its width
 7. **Copy** puts the table on the system clipboard. In View mode this is the header plus filtered rows. In Edit mode a selected range is copied; otherwise it is the whole table. **Cut** (`Ctrl+X` / `Cmd+X`) copies the range then clears those cells
@@ -63,10 +64,11 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 - Paste does not open `.xlsx` or `.docx` files. Copy the cells in Excel or Word first, then paste into TableCSV
 - German / EU Excel CSV uses `;`. TableCSV keeps that delimiter. Values like `1,5` stay in one cell. Column sort reads them as numbers when the UI or OS is German
 - Column types (text, number, date, checkbox) are stored with the plugin for that file. The CSV itself stays plain text
+- Column filters stay while the file is open. They are not written into the CSV. Changing the column type clears that filter
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **2.0.0** — select cells in View and see sum, average, and count in a status bar at the bottom (desktop).
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **2.1.0** — filter a column by its type (text, number, date, or checkbox) without changing the file.
 
 ### Author
 
@@ -100,6 +102,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 - 見出し行を固定してスクロールしやすい
 - **View（閲覧）**: 文字で行を絞り込む（ファイルは変更しない）
 - **View（閲覧）**: 列見出しをクリックして並べ替え（昇順 → 降順 → 解除。ファイルは変更しない）
+- **閲覧・編集**: 見出しの下の欄で、その列だけを絞り込む（テキストは部分一致、数値・日付は以上／以下、チェックはすべて／オン／オフ／空）。上の検索欄と組み合わせる。CSV には書かない
 - **閲覧・編集**: 列見出しを右クリックして型（テキスト、数値、日付、チェック）を指定する。ファイルごとに覚え、CSV には書かない
 - **View（閲覧）**: **最下行を固定** — 合計行など最後の1行を並べ替え対象外にできる
 - **View（閲覧）**: **先頭列を固定** — 横スクロールしても左端の列を残す
@@ -120,8 +123,8 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 1. コミュニティプラグインから **TableCSV** を入れて有効にする
 2. ファイル一覧のフォルダを右クリックして **CSVを新規作成**、またはコマンドパレットで同じ操作。既存の `.csv` を開いてもよい
-3. 新規ファイルは **Edit**。既存ファイルは最初 **View**。フィルター欄に文字を入れると行が絞り込まれる。列見出しをクリックすると並べ替え。列見出しを右クリックすると型を指定できる。**最下行を固定** にチェックすると、合計行など最後の1行は並べ替えされず下に残る。表が横に長いときは **先頭列を固定**
-4. **絞り込みを書き出す** で、見出しと今見えている行（絞り込み・並べ替え・最下行固定）を同じフォルダの新しいCSVにする。元のファイルは書き込まない
+3. 新規ファイルは **Edit**。既存ファイルは最初 **View**。上の検索欄で行を絞り込む。見出しの下の欄で、その列だけを絞る。列見出しをクリックすると並べ替え。列見出しを右クリックすると型を指定できる。**最下行を固定** にチェックすると、合計行など最後の1行は並べ替えされず下に残る。表が横に長いときは **先頭列を固定**
+4. **絞り込みを書き出す** で、見出しと今見えている行（検索・列の絞り込み・並べ替え・最下行固定）を同じフォルダの新しいCSVにする。元のファイルは書き込まない
 5. 既存ファイルを直すときは **Edit** に切り替える。絞り込みはそのまま残るので、探した行だけを直せる。隠れている行には触れない。絞り込み欄を空にすると表全体を編集できる（ソートは Edit に持ち越さない）。絞り込み中は複数行の貼り付けを断る
 6. ツールバーで選択中の行・列を追加・削除する。**元に戻す** で直前の編集を取り消す。**やり直す** で戻す。セルをクリックして選ぶ。ドラッグまたは `Shift`+クリックで範囲を選ぶ。**切り取り**はその範囲をコピーして空にする。**クリア**または `Delete` は空にするだけ。`Tab` で右、`Enter` で下へ進む（`Shift` で逆）。矢印は端で隣へ（上下は常に）。`Shift`+矢印で範囲。`Esc` で解除。変換中は動かない。列見出しの端をドラッグすると幅が変わる
 7. **Copy** で表をクリップボードへ送る。Viewでは見出し＋絞り込み後の行。Editでは範囲があればその範囲、なければ表全体。**切り取り**（`Ctrl+X` / `Cmd+X`）は範囲をコピーしてからセルを空にする
@@ -135,10 +138,11 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 - `.xlsx` や `.docx` はそのまま開けない。Excel や Word でセルをコピーしてから TableCSV に貼る
 - ドイツ / EU の Excel は `;` 区切り。保存時もそのまま。`1,5` は1セル。UI または OS がドイツ語なら並べ替えで数値として扱う
 - 列の型（テキスト、数値、日付、チェック）はプラグイン側でファイルごとに覚える。CSV 自体は今までどおり文字のまま
+- 列の絞り込みは、ファイルを開いている間だけ残る。CSV には書かない。列の型を変えると、その列の絞り込みは消える
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **2.0.0** — 閲覧でセルを選ぶと、最下部のステータスバーに合計・平均・個数が出る（デスクトップ）。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **2.1.0** — 列の型に合わせて、その列だけを絞り込む（ファイルは変えない）。
 
 ### 作者
 
@@ -175,6 +179,7 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 - **Neu**: CSV aus einem Ordner oder über die Befehlspalette erstellen (öffnet im Bearbeiten-Modus)
 - Kopfzeile bleibt beim Scrollen sichtbar
 - **Ansicht**: Zeilen filtern und Spalten sortieren (Datei bleibt unverändert)
+- **Ansicht und Bearbeiten**: Eine Filterzeile unter der Kopfzeile grenzt nur diese Spalte ein (Text enthält; Zahl/Datum Min/Max; Kontrollkästchen alle / an / aus / leer). Zusammen mit dem Suchfeld. Steht nicht in der CSV
 - **Ansicht und Bearbeiten**: Rechtsklick auf den Spaltenkopf setzt den Typ (Text, Zahl, Datum, Kontrollkästchen). Der Typ bleibt pro Datei und steht nicht in der CSV
 - **Ansicht**: optional **Letzte Zeile anheften** für Summenzeilen
 - **Ansicht**: optional **Erste Spalte anheften**, damit sie beim seitlichen Scrollen sichtbar bleibt
@@ -192,7 +197,7 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 
 ### Versionshinweise
 
-Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **2.0.0** — Zellen in der Ansicht auswählen, unten zeigt eine Statusleiste Summe, Mittelwert und Anzahl (Desktop).
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **2.1.0** — eine Spalte nach ihrem Typ filtern, ohne die Datei zu ändern.
 
 ### Lizenz
 

@@ -1,4 +1,4 @@
-/* TableCSV 2.0.0 */
+/* TableCSV 2.1.0 */
 html body .workspace-leaf-content[data-type="csv"].is-csv-view-mode {
   overflow: hidden;
   display: flex;
@@ -86,8 +86,8 @@ html body .table-csv-view.is-edit {
 html body .table-csv-view.is-view .table-csv-scroll,
 html body .table-csv-view.is-edit .table-csv-scroll {
   flex: none;
-  height: calc(100vh - 14rem);
-  max-height: calc(100vh - 14rem);
+  height: calc(100vh - 16.5rem);
+  max-height: calc(100vh - 16.5rem);
   overflow-x: scroll;
   overflow-y: scroll;
   scrollbar-gutter: stable;
@@ -96,8 +96,8 @@ html body .table-csv-view.is-edit .table-csv-scroll {
 }
 
 html body .table-csv-view.is-view.is-cell-select .table-csv-scroll {
-  height: calc(100vh - 16rem);
-  max-height: calc(100vh - 16rem);
+  height: calc(100vh - 18.5rem);
+  max-height: calc(100vh - 18.5rem);
 }
 
 .table-csv-view.is-cell-select .table-csv-scroll:focus {
@@ -228,6 +228,37 @@ html body .table-csv-view.is-view .table-csv-table tbody tr.is-pinned td.is-froz
 
 .table-csv-sortable.is-sorted {
   color: var(--text-accent);
+}
+
+.table-csv-filter-row th {
+  padding: 2px 4px;
+  font-weight: 400;
+  background: var(--background-secondary);
+  overflow: visible;
+}
+
+.table-csv-col-filter {
+  display: flex;
+  gap: 3px;
+  min-width: 0;
+  align-items: center;
+}
+
+.table-csv-col-filter input,
+.table-csv-col-filter select {
+  width: 100%;
+  min-width: 0;
+  font-size: 0.8em;
+  padding: 1px 4px;
+}
+
+.table-csv-head-table th.is-col-filtered {
+  box-shadow: inset 0 -2px 0 var(--interactive-accent);
+}
+
+html body .table-csv-view.is-view .table-csv-table thead .table-csv-filter-row th.is-frozen-col {
+  z-index: 3;
+  background: var(--background-secondary);
 }
 
 .table-csv-type-mark {

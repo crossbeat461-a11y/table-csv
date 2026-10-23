@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.1.0
+
+- View and Edit: a filter row under the header narrows that column only. Text matches a substring. Number and date use min and max (German `1,5` and `31.12.2026` stay as written). Checkbox is all / on / off / blank
+- Column filters stay in the session and are not written into the CSV. They work with the existing search box (AND). Hidden rows stay untouched in Edit. Export filtered writes the rows you can see
+- Changing a column type clears that column's filter. A toolbar button appears while any column filter is on
+
+### 日本語
+
+- 閲覧・編集: 見出しの下の欄で、その列だけを絞り込む。テキストは部分一致。数値と日付は以上・以下（ドイツ式の `1,5` や `31.12.2026` はそのまま）。チェックはすべて／オン／オフ／空
+- 列の絞り込みは開いている間だけ覚え、CSV には書かない。上の検索欄と組み合わせる（両方に合う行）。編集では見えている行だけを直す。絞り込みを書き出すは、いま見えている行を出す
+- 列の型を変えると、その列の絞り込みは消える。どれか1列でも絞っていると、ツールバーに「列の絞り込みを消す」が出る
+
+### Deutsch
+
+- Ansicht und Bearbeiten: Eine Filterzeile unter der Kopfzeile grenzt nur diese Spalte ein. Text sucht Teilzeichenketten. Zahl und Datum nutzen Min und Max (deutsches `1,5` und `31.12.2026` bleiben unverändert). Kontrollkästchen: alle / an / aus / leer
+- Spaltenfilter gelten nur in der Sitzung und stehen nicht in der CSV. Sie wirken zusammen mit dem Suchfeld (UND). Im Bearbeiten bleiben ausgeblendete Zeilen unberührt. Filter exportieren schreibt die sichtbaren Zeilen
+- Ein Wechsel des Spaltentyps löscht den Filter dieser Spalte. Solange ein Spaltenfilter aktiv ist, erscheint in der Leiste „Spaltenfilter löschen“
+
 ## 2.0.0
 
 - View: click or drag to select cells. Shift+click extends the range. Ctrl+click (Cmd+click on Mac) adds a separate cell or range; drag or Shift+click from there to grow it. The totals cover all ranges, and a cell where ranges overlap counts once. The range is lightly highlighted. Escape clears it
