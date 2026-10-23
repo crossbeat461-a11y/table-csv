@@ -1,5 +1,5 @@
 /*
-TableCSV 2.1.0
+TableCSV 2.1.1
 */
 'use strict';
 
@@ -1045,6 +1045,12 @@ class TableCsvView extends obsidian.TextFileView {
     this.sizerEl = null;
     this.bodyTableEl = null;
     this.layoutColPx = [];
+    this.layoutDirty = true;
+    this.filterRefreshQueued = 0;
+    this.metaEl = null;
+    this.clearColBtn = null;
+    this._matchQ = '';
+    this._matchCols = [];
     // View-mode cell selection. Anchors hold the real row index (item.index)
     // so a sort or repaint never moves the selection to other rows.
     this.vRanges = [];
@@ -1497,6 +1503,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.cellUndoPushed = false;
     this.loadColWidths();
     this.loadColTypes();
+    this.layoutDirty = true;
     this.clearViewSel();
     if (clear) {
       this.filter = '';
@@ -1533,6 +1540,12 @@ class TableCsvView extends obsidian.TextFileView {
     this.headTableEl = null;
     this.sizerEl = null;
     this.bodyTableEl = null;
+    this.metaEl = null;
+    this.clearColBtn = null;
+    if (this.filterRefreshQueued) {
+      window.cancelAnimationFrame(this.filterRefreshQueued);
+      this.filterRefreshQueued = 0;
+    }
     this.contentEl.empty();
   }
 
@@ -1847,6 +1860,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.colTypes[col] = normalizeColType(type);
     this.ensureColFilters(cols);
     this.colFilters[col] = emptyColFilter(this.colTypes[col]);
+    this.layoutDirty = true;
     void this.saveColLayout();
     this.render();
   }
@@ -1916,40 +1930,59 @@ class TableCsvView extends obsidian.TextFileView {
   }
 
   measureColWidths(cols) {
+    if (
+      !this.layoutDirty &&
+      this.layoutColPx &&
+      this.layoutColPx.length === cols
+    ) {
+      return this.layoutColPx;
+    }
     var out = [];
     var i;
     for (i = 0; i < cols; i++) {
       out[i] = MIN_COL_PX;
     }
     if (!cols || !this.contentEl) {
+      this.layoutDirty = false;
       return out;
     }
     var probe = this.contentEl.createSpan({ cls: 'table-csv-col-probe' });
     var em = 16;
+    var measure = null;
     try {
       var fs = window.getComputedStyle(probe).fontSize;
       var parsed = parseFloat(fs);
       if (parsed > 0) {
         em = parsed;
       }
+      var canvas = document.createElement('canvas');
+      var ctx = canvas.getContext('2d');
+      if (ctx) {
+        var cs = window.getComputedStyle(probe);
+        ctx.font = cs.font || em + 'px sans-serif';
+        measure = function (text) {
+          return ctx.measureText(text || ' ').width;
+        };
+      }
     } catch (e) {
       /* ignore */
     }
     var cap = Math.round(28 * em);
     var pad = 20;
-    var maxRows = Math.min(this.rows.length, 400);
+    var maxRows = Math.min(this.rows.length, 80);
     for (i = 0; i < cols; i++) {
       if (this.colWidths[i] > 0) {
         out[i] = this.colWidths[i];
         continue;
       }
+      var typeNow = this.colTypeAt(i);
       var best = MIN_COL_PX;
       var samples = [];
       if (this.rows.length) {
         samples.push(String(this.rows[0][i] == null ? '' : this.rows[0][i]));
       }
-      if (this.colTypeAt(i) !== 'text') {
-        samples.push(samples[0] ? samples[0] + ' ' + colTypeLabel(this.colTypeAt(i)) : colTypeLabel(this.colTypeAt(i)));
+      if (typeNow !== 'text') {
+        samples.push(samples[0] ? samples[0] + ' ' + colTypeLabel(typeNow) : colTypeLabel(typeNow));
       }
       var longest = '';
       var r;
@@ -1964,21 +1997,24 @@ class TableCsvView extends obsidian.TextFileView {
       }
       var s;
       for (s = 0; s < samples.length; s++) {
-        probe.setText(samples[s] || ' ');
-        var w = Math.ceil(probe.getBoundingClientRect().width) + pad;
+        var raw = samples[s] || ' ';
+        var w = measure
+          ? Math.ceil(measure(raw)) + pad
+          : (probe.setText(raw), Math.ceil(probe.getBoundingClientRect().width) + pad);
         if (w > best) {
           best = w;
         }
       }
-      if (this.colTypeAt(i) === 'checkbox') {
+      if (typeNow === 'checkbox') {
         best = Math.max(best, 56);
       }
-      if (this.colTypeAt(i) === 'number' || this.colTypeAt(i) === 'date') {
+      if (typeNow === 'number' || typeNow === 'date') {
         best = Math.max(best, 132);
       }
       out[i] = Math.max(MIN_COL_PX, Math.min(cap, best));
     }
     probe.remove();
+    this.layoutDirty = false;
     return out;
   }
 
@@ -2413,7 +2449,7 @@ class TableCsvView extends obsidian.TextFileView {
     var out = [];
     var rows = this.rows;
     if (rows.length > 1) {
-      this.ensureColFilters(colCountOf(rows));
+      this.prepareFilterPass();
       for (var i = 1; i < rows.length; i++) {
         if (this.rowMatchesFilters(rows[i])) {
           out.push(i);
@@ -2454,6 +2490,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.rows.splice(at, 0, emptyRow(cols));
     this.collapseSelTo(at, this.selCol);
     this.persist();
+    this.layoutDirty = true;
     this.render();
   }
 
@@ -2472,6 +2509,7 @@ class TableCsvView extends obsidian.TextFileView {
     }
     this.collapseSelTo(this.selRow, this.selCol);
     this.persist();
+    this.layoutDirty = true;
     this.render();
   }
 
@@ -2501,6 +2539,7 @@ class TableCsvView extends obsidian.TextFileView {
     }
     this.persist();
     void this.saveColLayout();
+    this.layoutDirty = true;
     this.render();
   }
 
@@ -2538,6 +2577,7 @@ class TableCsvView extends obsidian.TextFileView {
     }
     this.persist();
     void this.saveColLayout();
+    this.layoutDirty = true;
     this.render();
   }
 
@@ -2546,7 +2586,7 @@ class TableCsvView extends obsidian.TextFileView {
     if (!rows.length) {
       return [];
     }
-    this.ensureColFilters(colCountOf(rows));
+    this.prepareFilterPass();
     var body = rows.slice(1);
     var out = [];
     for (var i = 0; i < body.length; i++) {
@@ -2609,10 +2649,7 @@ class TableCsvView extends obsidian.TextFileView {
   applyFilterInput(input) {
     this.filter = input.value || '';
     this.filterCaret = input.selectionStart;
-    this.keepFilterFocus = true;
-    this.clearViewSel();
-    this.savedScrollTop = 0;
-    this.render();
+    this.scheduleFilterRefresh();
   }
 
   ensureColFilters(cols) {
@@ -2642,8 +2679,27 @@ class TableCsvView extends obsidian.TextFileView {
     return false;
   }
 
+  prepareFilterPass() {
+    var cols = this.rows.length ? colCountOf(this.rows) : 0;
+    this.ensureColTypes(cols);
+    this.ensureColFilters(cols);
+    this._matchQ = normalizeFilterText(this.filter);
+    this._matchCols = [];
+    var c;
+    for (c = 0; c < cols; c++) {
+      var f = this.colFilters[c];
+      if (!colFilterActive(f)) {
+        continue;
+      }
+      if (f.type !== normalizeColType(this.colTypes[c])) {
+        continue;
+      }
+      this._matchCols.push({ c: c, f: f });
+    }
+  }
+
   rowMatchesFilters(row) {
-    var q = normalizeFilterText(this.filter);
+    var q = this._matchQ;
     if (q) {
       var hit = false;
       var i;
@@ -2657,21 +2713,113 @@ class TableCsvView extends obsidian.TextFileView {
         return false;
       }
     }
-    var cols = this.colFilters ? this.colFilters.length : 0;
-    var c;
-    for (c = 0; c < cols; c++) {
-      var f = this.colFilters[c];
-      if (!colFilterActive(f)) {
-        continue;
-      }
-      if (f.type !== this.colTypeAt(c)) {
-        continue;
-      }
-      if (!cellMatchesColFilter(row[c], f)) {
+    var list = this._matchCols || [];
+    var n;
+    for (n = 0; n < list.length; n++) {
+      if (!cellMatchesColFilter(row[list[n].c], list[n].f)) {
         return false;
       }
     }
     return true;
+  }
+
+  scheduleFilterRefresh() {
+    if (this.filterRefreshQueued) {
+      return;
+    }
+    var self = this;
+    this.filterRefreshQueued = window.requestAnimationFrame(function () {
+      self.filterRefreshQueued = 0;
+      self.refreshAfterFilter();
+    });
+  }
+
+  metaLineText() {
+    var rows = this.rows;
+    var total = Math.max(0, rows.length - 1);
+    var shown =
+      this.mode === 'view'
+        ? (this.viewBody || []).length
+        : this.editIndex
+        ? this.editIndex.length
+        : total;
+    var path = this.file ? this.file.path : t('(未保存)', '(unsaved)', '(ungespeichert)');
+    var modeLabel =
+      this.mode === 'edit'
+        ? t('編集', 'edit', 'Bearbeiten')
+        : t('閲覧', 'view', 'Ansicht');
+    return path + ' — ' + modeLabel + ' — ' + shown + ' / ' + total;
+  }
+
+  syncColFilterChrome() {
+    if (this.clearColBtn) {
+      this.clearColBtn.hidden = !this.hasActiveColFilters();
+    }
+    if (!this.headTableEl) {
+      return;
+    }
+    var cells = this.headTableEl.querySelectorAll('th[data-col-index]');
+    var i;
+    for (i = 0; i < cells.length; i++) {
+      var col = Number(cells[i].getAttribute('data-col-index'));
+      var on = isFinite(col) && colFilterActive(this.colFilters[col]);
+      cells[i].toggleClass('is-col-filtered', on);
+    }
+  }
+
+  syncColFilterInputs() {
+    if (!this.headTableEl) {
+      return;
+    }
+    var fields = this.headTableEl.querySelectorAll('[data-col-filter-col]');
+    var i;
+    for (i = 0; i < fields.length; i++) {
+      var el = fields[i];
+      var col = Number(el.getAttribute('data-col-filter-col'));
+      var field = el.getAttribute('data-col-filter-field');
+      var f = this.colFilters[col];
+      if (!f) {
+        continue;
+      }
+      if (field === 'state') {
+        el.value = f.state || 'any';
+      } else if (field === 'q' || field === 'min' || field === 'max') {
+        el.value = f[field] || '';
+      }
+    }
+  }
+
+  refreshAfterFilter() {
+    if (!this.scrollEl || !this.tbodyEl || !this.rows.length) {
+      this.render();
+      return;
+    }
+    this.clearViewSel();
+    if (this.mode === 'edit') {
+      this.buildEditIndex();
+    } else {
+      this.editIndex = null;
+    }
+    var body = this.mode === 'view' ? this.visibleBody() : [];
+    this.viewBody = this.mode === 'view' ? body : [];
+    this.viewPos = null;
+    if (this.viewSelectable()) {
+      this.viewPos = new Map();
+      var vp;
+      for (vp = 0; vp < body.length; vp++) {
+        this.viewPos.set(body[vp].index, vp);
+      }
+    }
+    this.savedScrollTop = 0;
+    this.scrollEl.scrollTop = 0;
+    this.paintRows();
+    if (this.metaEl) {
+      this.metaEl.setText(this.metaLineText());
+    }
+    this.syncColFilterChrome();
+    if (this.viewSelectable()) {
+      this.updateViewStatus();
+    }
   }
 
   clearColFilter(col) {
@@ -2681,9 +2829,8 @@ class TableCsvView extends obsidian.TextFileView {
       return;
     }
     this.colFilters[col] = emptyColFilter(this.colTypeAt(col));
-    this.clearViewSel();
-    this.savedScrollTop = 0;
-    this.render();
+    this.syncColFilterInputs();
+    this.refreshAfterFilter();
   }
 
   clearAllColFilters() {
@@ -2693,9 +2840,8 @@ class TableCsvView extends obsidian.TextFileView {
     for (i = 0; i < cols; i++) {
       this.colFilters[i] = emptyColFilter(this.colTypeAt(i));
     }
-    this.clearViewSel();
-    this.savedScrollTop = 0;
-    this.render();
+    this.syncColFilterInputs();
+    this.refreshAfterFilter();
   }
 
   applyColFilterInput(col, field, input) {
@@ -2709,15 +2855,7 @@ class TableCsvView extends obsidian.TextFileView {
     } else if (field === 'state') {
       this.colFilters[col].state = input.value || 'any';
     }
-    this.keepColFilterFocus = true;
-    this.colFilterFocus = {
-      col: col,
-      field: field,
-      caret: typeof input.selectionStart === 'number' ? input.selectionStart : null,
-    };
-    this.clearViewSel();
-    this.savedScrollTop = 0;
-    this.render();
+    this.scheduleFilterRefresh();
   }
 
   restoreColFilterFocus(el, col, field) {
@@ -3275,42 +3413,31 @@ class TableCsvView extends obsidian.TextFileView {
       }
     }
 
-    if (this.hasActiveColFilters()) {
-      var clearColBtn = toolbar.createEl('button', {
-        text: t('列の絞り込みを消す', 'Clear column filters', 'Spaltenfilter löschen'),
-        type: 'button',
-      });
-      clearColBtn.setAttribute(
-        'title',
-        t(
-          '列ごとの絞り込みだけを消します。上の検索欄はそのままです',
-          'Clears per-column filters only. The search box stays as it is',
-          'Löscht nur die Spaltenfilter. Das Suchfeld bleibt unverändert',
-        ),
-      );
-      clearColBtn.addEventListener('click', function () {
-        self.clearAllColFilters();
-      });
-    }
+    var clearColBtn = toolbar.createEl('button', {
+      text: t('列の絞り込みを消す', 'Clear column filters', 'Spaltenfilter löschen'),
+      type: 'button',
+    });
+    clearColBtn.setAttribute(
+      'title',
+      t(
+        '列ごとの絞り込みだけを消します。上の検索欄はそのままです',
+        'Clears per-column filters only. The search box stays as it is',
+        'Löscht nur die Spaltenfilter. Das Suchfeld bleibt unverändert',
+      ),
+    );
+    clearColBtn.addEventListener('click', function () {
+      self.clearAllColFilters();
+    });
+    this.clearColBtn = clearColBtn;
+    this.clearColBtn.hidden = !this.hasActiveColFilters();
 
     var rows = this.rows;
     var cols = rows.length ? colCountOf(rows) : 0;
     var body = this.mode === 'view' ? this.visibleBody() : [];
-    var total = Math.max(0, rows.length - 1);
-    var shown =
-      this.mode === 'view'
-        ? body.length
-        : this.editIndex
-        ? this.editIndex.length
-        : total;
-    var path = this.file ? this.file.path : t('(未保存)', '(unsaved)', '(ungespeichert)');
-    var modeLabel =
-      this.mode === 'edit'
-        ? t('編集', 'edit', 'Bearbeiten')
-        : t('閲覧', 'view', 'Ansicht');
-    el.createDiv({
+    this.viewBody = this.mode === 'view' ? body : [];
+    this.metaEl = el.createDiv({
       cls: 'table-csv-meta',
-      text: path + ' — ' + modeLabel + ' — ' + shown + ' / ' + total,
+      text: this.metaLineText(),
     });
 
     if (!rows.length) {
@@ -3341,6 +3468,7 @@ class TableCsvView extends obsidian.TextFileView {
       if (this.mode === 'edit') {
         (function (colIndex) {
           var th = hr.createEl('th');
+          th.setAttribute('data-col-index', String(colIndex));
           th.toggleClass('is-in-range', self.cellInRange(0, colIndex));
           th.toggleClass('is-selected', self.selEndRow === 0 && self.selEndCol === colIndex);
           self.bindCell(th, 0, colIndex, headVal, true);
@@ -3370,6 +3498,7 @@ class TableCsvView extends obsidian.TextFileView {
           var thView = hr.createEl('th', {
             cls: 'table-csv-sortable',
             attr: {
+              'data-col-index': String(colIndex),
               title:
                 t(
                   'クリックで並べ替え。右クリックで列の型。下の欄でこの列を絞る',
@@ -3410,6 +3539,7 @@ class TableCsvView extends obsidian.TextFileView {
     for (c = 0; c < cols; c++) {
       (function (colIndex) {
         var thFilter = filterRow.createEl('th');
+        thFilter.setAttribute('data-col-index', String(colIndex));
         thFilter.toggleClass('is-frozen-col', self.mode === 'view' && self.pinFirstCol && colIndex === 0);
         thFilter.toggleClass('is-col-filtered', colFilterActive(self.colFilters[colIndex]));
         thFilter.addEventListener('contextmenu', function (ev) {

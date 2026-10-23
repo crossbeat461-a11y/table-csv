@@ -68,7 +68,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **2.1.0** — filter a column by its type (text, number, date, or checkbox) without changing the file.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **2.1.1** — filter and column filter update visible rows only, so larger CSVs stay responsive.
 
 ### Author
 
@@ -142,7 +142,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **2.1.0** — 列の型に合わせて、その列だけを絞り込む（ファイルは変えない）。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **2.1.1** — 検索と列の絞り込みは見えている行だけ描き直す。大きい CSV でも軽くする。
 
 ### 作者
 
@@ -197,7 +197,7 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 
 ### Versionshinweise
 
-Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **2.1.0** — eine Spalte nach ihrem Typ filtern, ohne die Datei zu ändern.
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **2.1.1** — Suche und Spaltenfilter zeichnen nur sichtbare Zeilen neu, damit große CSV leicht bleiben.
 
 ### Lizenz
 

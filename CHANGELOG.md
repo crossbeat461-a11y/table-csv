@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.1.1
+
+- Filter and column filter update the visible rows only. Column widths are measured once, not on every keystroke
+
+### 日本語
+
+- 検索と列の絞り込みは、見えている行だけを描き直す。列幅は最初の1回だけ測る
+
+### Deutsch
+
+- Suche und Spaltenfilter zeichnen nur die sichtbaren Zeilen neu. Spaltenbreiten werden einmal gemessen, nicht bei jeder Taste
+
 ## 2.1.0
 
 - View and Edit: a filter row under the header narrows that column only. Text matches a substring. Number and date use min and max (German `1,5` and `31.12.2026` stay as written). Checkbox is all / on / off / blank
