@@ -1,5 +1,5 @@
 /*
-TableCSV 2.1.1
+TableCSV 2.2.0
 */
 'use strict';
 
@@ -289,6 +289,24 @@ function parseHtmlTable(html) {
   return best;
 }
 
+function clipboardGridQuality(rows) {
+  if (!rows || !rows.length) {
+    return 0;
+  }
+  var cols = colCountOf(rows);
+  if (cols < 1) {
+    return 0;
+  }
+  var same = 0;
+  var i;
+  for (i = 0; i < rows.length; i++) {
+    if ((rows[i] || []).length === cols) {
+      same++;
+    }
+  }
+  return same * 100 + cols;
+}
+
 function parseClipboardToRows(text, html) {
   var fromText = [];
   var fromHtml = [];
@@ -297,21 +315,41 @@ function parseClipboardToRows(text, html) {
   } catch (e) {
     fromText = [];
   }
-  if (isMultiCell(fromText)) {
-    return fromText;
-  }
   try {
     fromHtml = parseHtmlTable(html);
   } catch (e) {
     fromHtml = [];
   }
-  if (isMultiCell(fromHtml)) {
+  // Browser copies often put a real <table> in HTML, while text/plain
+  // splits cells that contain newlines (note dashboard titles). Prefer
+  // the shape with more complete rows. Equal scores keep text first.
+  var qHtml = clipboardGridQuality(fromHtml);
+  var qText = clipboardGridQuality(fromText);
+  if (qHtml > qText) {
     return fromHtml;
   }
   if (fromText && fromText.length) {
     return fromText;
   }
   return fromHtml && fromHtml.length ? fromHtml : [];
+}
+
+function cloneTableRows(block) {
+  var out = [];
+  var i;
+  var j;
+  for (i = 0; i < (block || []).length; i++) {
+    var src = block[i] || [];
+    var row = [];
+    for (j = 0; j < src.length; j++) {
+      row.push(String(src[j] == null ? '' : src[j]));
+    }
+    out.push(row);
+  }
+  if (out.length) {
+    padAllRows(out);
+  }
+  return out;
 }
 
 function padAllRows(rows) {
@@ -1445,7 +1483,18 @@ class TableCsvView extends obsidian.TextFileView {
       true,
     );
     this.registerDomEvent(this.contentEl, 'paste', function (ev) {
+      var tgt = ev.target;
+      if (tgt && (tgt.tagName === 'INPUT' || tgt.tagName === 'TEXTAREA')) {
+        return;
+      }
       if (self.mode !== 'edit') {
+        new obsidian.Notice(
+          t(
+            '貼り付けるには編集モードに切り替えてください',
+            'Switch to Edit to paste',
+            'Zum Einfügen in den Bearbeiten-Modus wechseln',
+          ),
+        );
         return;
       }
       try {
@@ -2368,6 +2417,46 @@ class TableCsvView extends obsidian.TextFileView {
       return;
     }
     this.applyClipboardRows(parseClipboardToRows(payload.text, payload.html));
+  }
+
+  async pasteReplaceTable() {
+    if (this.mode !== 'edit') {
+      new obsidian.Notice(
+        t('貼り付けるには編集モードに切り替えてください', 'Switch to Edit to paste', 'Zum Einfügen in den Bearbeiten-Modus wechseln'),
+      );
+      return;
+    }
+    var payload;
+    try {
+      payload = await this.readClipboardPayload();
+    } catch (e) {
+      new obsidian.Notice(t('クリップボードを読めませんでした', 'Could not read clipboard', 'Zwischenablage konnte nicht gelesen werden'));
+      return;
+    }
+    this.replaceTableWithRows(parseClipboardToRows(payload.text, payload.html));
+  }
+
+  replaceTableWithRows(rows) {
+    if (!rows || !rows.length) {
+      new obsidian.Notice(t('クリップボードが空です', 'Clipboard is empty', 'Zwischenablage ist leer'));
+      return;
+    }
+    try {
+      this.pushUndo();
+      this.rows = cloneTableRows(rows);
+      this.collapseSelTo(0, 0);
+      this.ensureColWidths(colCountOf(this.rows));
+      this.ensureColTypes(colCountOf(this.rows));
+      this.ensureColFilters(colCountOf(this.rows));
+      this.layoutDirty = true;
+      this.persist();
+      this.render();
+      new obsidian.Notice(
+        t('表全体を貼り付けました', 'Pasted the entire table', 'Gesamte Tabelle eingefügt'),
+      );
+    } catch (e) {
+      new obsidian.Notice(t('貼り付けに失敗しました', 'Paste failed', 'Einfügen fehlgeschlagen'));
+    }
   }
 
   applyClipboardRows(rows) {
@@ -3349,8 +3438,31 @@ class TableCsvView extends obsidian.TextFileView {
         self.clearSelectedCells();
       });
       var pasteBtn = toolbar.createEl('button', { text: t('貼り付け', 'Paste', 'Einfügen'), type: 'button' });
+      pasteBtn.setAttribute(
+        'title',
+        t(
+          '選んだセルから右下へ貼る',
+          'Paste from the selected cell down and right',
+          'Ab der gewählten Zelle nach rechts unten einfügen',
+        ),
+      );
       pasteBtn.addEventListener('click', function () {
         void self.pasteTable();
+      });
+      var replaceBtn = toolbar.createEl('button', {
+        text: t('表全体を貼り付け', 'Paste entire table', 'Gesamte Tabelle einfügen'),
+        type: 'button',
+      });
+      replaceBtn.setAttribute(
+        'title',
+        t(
+          'クリップボードの表を、このファイルの中身そのままにする（新規・上書きどちらも）',
+          'Make this file exactly the clipboard table (new file or overwrite)',
+          'Datei wird genau zur Tabelle aus der Zwischenablage (neu oder überschreiben)',
+        ),
+      );
+      replaceBtn.addEventListener('click', function () {
+        void self.pasteReplaceTable();
       });
       var insertRowBtn = toolbar.createEl('button', { text: t('行を追加', 'Insert row', 'Zeile einfügen'), type: 'button' });
       var deleteRowBtn = toolbar.createEl('button', { text: t('行を削除', 'Delete row', 'Zeile löschen'), type: 'button' });
@@ -4047,6 +4159,24 @@ class TableCsvPlugin extends obsidian.Plugin {
         }
         if (!checking) {
           view.clearSelectedCells();
+        }
+        return true;
+      },
+    });
+    this.addCommand({
+      id: 'paste-replace-table',
+      name: t(
+        '表全体を貼り付け（クリップボード）',
+        'Paste entire table from clipboard',
+        'Gesamte Tabelle aus Zwischenablage einfügen',
+      ),
+      checkCallback: function (checking) {
+        var view = self.app.workspace.getActiveViewOfType(TableCsvView);
+        if (!view || view.mode !== 'edit') {
+          return false;
+        }
+        if (!checking) {
+          void view.pasteReplaceTable();
         }
         return true;
       },

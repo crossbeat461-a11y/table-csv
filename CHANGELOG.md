@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.2.0
+
+- Edit: **Paste entire table** makes the file exactly the clipboard table (toolbar, command palette). Works for new and overwrite. Undo restores the previous file
+- Paste prefers a copied HTML table when the plain text is broken by newlines inside cells (browser dashboards). Cell text is not rewritten. German `1,5` stays as written
+- View: pasting into the table (not the filter box) asks you to switch to Edit
+
+### 日本語
+
+- 編集: **表全体を貼り付け** で、クリップボードの表をファイルの中身そのままにする（新規・上書きどちらも。ツールバー、コマンドパレット）。元に戻すで直前の内容に戻る
+- 貼り付けは、セル内改行でテキストが崩れているとき、ブラウザの表（HTML）を優先する。数値の表記は変えない。ドイツ式の `1,5` はそのまま
+- 閲覧: 絞り込み欄以外へ貼ると、編集へ切り替えるよう知らせる
+
+### Deutsch
+
+- Bearbeiten: **Gesamte Tabelle einfügen** macht die Datei genau zur Tabelle aus der Zwischenablage (neu oder überschreiben; Leiste, Befehlspalette). Rückgängig stellt die vorherige Datei wieder her
+- Beim Einfügen wird eine kopierte HTML-Tabelle bevorzugt, wenn der Klartext durch Zeilenumbrüche in Zellen zerfällt (Browser-Dashboards). Zelltext wird nicht umgeschrieben. Deutsches `1,5` bleibt unverändert
+- Ansicht: Einfügen in die Tabelle (nicht ins Filterfeld) fordert den Wechsel in den Bearbeiten-Modus
+
 ## 2.1.1
 
 - Filter and column filter update the visible rows only. Column widths are measured once, not on every keystroke

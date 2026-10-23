@@ -1,9 +1,9 @@
 {
   "id": "table-csv",
   "name": "TableCSV",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "minAppVersion": "1.8.7",
-  "description": "Open CSV files as tables. Create a CSV from a folder. Filter and sort without rewriting it, and edit the filtered rows. Filter a column by type. Set a column type. Pin last row or first column. Resize columns. Tab, Enter, arrows. Copy, cut, paste.",
+  "description": "Open CSV files as tables. Create a CSV from a folder. Filter and sort without rewriting it, and edit the filtered rows. Filter a column by type. Pin last row or first column. Copy, cut, paste. Paste entire table from the clipboard.",
   "author": "K-Tech Studio",
   "authorUrl": "https://github.com/crossbeat461-a11y",
   "fundingUrl": "https://buymeacoffee.com/k_tech_studio",
