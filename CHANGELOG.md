@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.3.0
+
+- View and Edit: open `.tsv` the same way as `.csv` (same table, filter, and save). An empty `.tsv` uses a tab delimiter. Saving keeps tabs. There is no CSV ↔ TSV conversion
+
+### 日本語
+
+- 閲覧・編集: `.tsv` を `.csv` と同じ表として開く（絞り込み・保存も同じ）。空の `.tsv` はタブ区切り。保存時もタブのまま。CSV と TSV の変換はしない
+
+### Deutsch
+
+- Ansicht und Bearbeiten: `.tsv` wie `.csv` als Tabelle öffnen (gleichen Filter und Speichern). Eine leere `.tsv` nutzt Tab als Trennzeichen. Speichern behält Tabs. Keine Umwandlung CSV ↔ TSV
+
 ## 2.2.0
 
 - Edit: **Paste entire table** makes the file exactly the clipboard table (toolbar, command palette). Works for new and overwrite. Undo restores the previous file

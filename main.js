@@ -1,5 +1,5 @@
 /*
-TableCSV 2.2.0
+TableCSV 2.3.0
 */
 'use strict';
 
@@ -57,9 +57,20 @@ function defaultDelimiter() {
   return ',';
 }
 
-function detectDelimiter(text) {
+function isTsvFile(file) {
+  return !!(file && String(file.extension || '').toLowerCase() === 'tsv');
+}
+
+function defaultDelimiterForFile(file) {
+  if (isTsvFile(file)) {
+    return '\t';
+  }
+  return defaultDelimiter();
+}
+
+function detectDelimiter(text, file) {
   var raw = String(text || '').replace(/^\uFEFF/, '');
-  var fallback = defaultDelimiter();
+  var fallback = defaultDelimiterForFile(file);
   if (!raw.length) {
     return fallback;
   }
@@ -1543,7 +1554,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.newline = detectNewline(data);
     this.trailingNewline = hasTrailingNewline(data);
     this.bom = hasBom(data);
-    this.delim = detectDelimiter(data);
+    this.delim = detectDelimiter(data, this.file);
     var parsed = parseCsv(data, this.delim);
     this.rows = parsed.rows;
     this.quoteAll = parsed.quoteAll;
@@ -1580,7 +1591,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.newline = '\n';
     this.trailingNewline = false;
     this.bom = false;
-    this.delim = defaultDelimiter();
+    this.delim = defaultDelimiterForFile(this.file);
     this.quoteAll = false;
     this.scrollEl = null;
     this.tbodyEl = null;
@@ -1783,7 +1794,7 @@ class TableCsvView extends obsidian.TextFileView {
     this.newline = detectNewline(raw);
     this.trailingNewline = hasTrailingNewline(raw);
     this.bom = hasBom(raw);
-    this.delim = detectDelimiter(raw);
+    this.delim = detectDelimiter(raw, this.file);
     var parsed = parseCsv(raw, this.delim);
     this.rows = parsed.rows;
     this.quoteAll = parsed.quoteAll;
@@ -4093,9 +4104,9 @@ class TableCsvPlugin extends obsidian.Plugin {
     });
     try {
       if (this.app.viewRegistry && this.app.viewRegistry.unregisterExtensions) {
-        this.app.viewRegistry.unregisterExtensions(['csv']);
+        this.app.viewRegistry.unregisterExtensions(['csv', 'tsv']);
       }
-      this.registerExtensions(['csv'], VIEW_TYPE);
+      this.registerExtensions(['csv', 'tsv'], VIEW_TYPE);
     } catch (e) {
       /* ignore */
     }

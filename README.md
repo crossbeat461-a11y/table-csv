@@ -19,11 +19,11 @@
 
 ## English
 
-Open `.csv` files as tables inside your vault. View and filter, or edit cells, rows, and columns. Create a new CSV from a folder.
+Open `.csv` and `.tsv` files as tables inside your vault. View and filter, or edit cells, rows, and columns. Create a new CSV from a folder.
 
 ### Features
 
-- Open any CSV file as a clean table view
+- Open any CSV or TSV file as a clean table view
 - **Create** a new CSV from a folder (right-click) or the command palette; it opens in Edit
 - Sticky header row for easier scrolling
 - **View** mode: text filter to narrow rows (does not change the file)
@@ -49,7 +49,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 ### How to use
 
 1. Install **TableCSV** from Community plugins and enable it
-2. Right-click a folder and choose **New CSV**, or run the same from the command palette. You can also open an existing `.csv`
+2. Right-click a folder and choose **New CSV**, or run the same from the command palette. You can also open an existing `.csv` or `.tsv`
 3. A new file opens in **Edit**. Existing files start in **View**. Type in the filter box to narrow matching rows. Use the row under the header to filter that column. Click a column header to sort. Right-click a header to set the column type. Check **Pin last row** when the bottom row is a total you do not want moved. Check **Pin first column** when the table is wide and you want the leftmost column to stay put
 4. **Export filtered** creates a new CSV next to the current file with the header plus the rows you can see (search, column filters, sort, and pin last row). The original file is not written
 5. Switch to **Edit** to change an existing file. The filter stays on, so you can change only the rows you searched for; hidden rows are not touched. Clear the filter box to edit the whole table. (Sort is not carried into Edit.) A multi-row paste is refused while filtered
@@ -61,6 +61,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 - Large CSVs draw the rows on screen; the rest wait until you scroll
 - View mode does not change the open file. **Export filtered** creates a new CSV beside it. Edit mode saves to the same `.csv` file in the vault
+- `.tsv` opens in the same table as `.csv`. Saving keeps the tab delimiter. There is no command to convert CSV to TSV or TSV to CSV
 - Copy and paste use the system clipboard. They do not require a companion spreadsheet plugin
 - Paste does not open `.xlsx` or `.docx` files. Copy the cells in Excel or Word first, then paste into TableCSV
 - German / EU Excel CSV uses `;`. TableCSV keeps that delimiter. Values like `1,5` stay in one cell. Column sort reads them as numbers when the UI or OS is German
@@ -69,7 +70,7 @@ Open `.csv` files as tables inside your vault. View and filter, or edit cells, r
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **2.2.0** — paste the entire table from the clipboard; HTML tables win when plain text is split by newlines in cells.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **2.3.0** — open `.tsv` like `.csv`. No CSV ↔ TSV conversion.
 
 ### Author
 
@@ -94,11 +95,11 @@ MIT
 <details open>
 <summary><strong>日本語</strong>（クリックで開閉）</summary>
 
-Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル・行・列の編集ができます。フォルダから CSV を新規作成できます。
+Vault内の `.csv` と `.tsv` を表として開きます。閲覧と絞り込み、セル・行・列の編集ができます。フォルダから CSV を新規作成できます。
 
 ### 機能
 
-- CSVファイルを表形式で表示
+- CSV / TSV ファイルを表形式で表示
 - **新規作成**: フォルダの右クリック、またはコマンドパレット。編集モードで開く
 - 見出し行を固定してスクロールしやすい
 - **View（閲覧）**: 文字で行を絞り込む（ファイルは変更しない）
@@ -124,7 +125,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 ### 使い方
 
 1. コミュニティプラグインから **TableCSV** を入れて有効にする
-2. ファイル一覧のフォルダを右クリックして **CSVを新規作成**、またはコマンドパレットで同じ操作。既存の `.csv` を開いてもよい
+2. ファイル一覧のフォルダを右クリックして **CSVを新規作成**、またはコマンドパレットで同じ操作。既存の `.csv` や `.tsv` を開いてもよい
 3. 新規ファイルは **Edit**。既存ファイルは最初 **View**。上の検索欄で行を絞り込む。見出しの下の欄で、その列だけを絞る。列見出しをクリックすると並べ替え。列見出しを右クリックすると型を指定できる。**最下行を固定** にチェックすると、合計行など最後の1行は並べ替えされず下に残る。表が横に長いときは **先頭列を固定**
 4. **絞り込みを書き出す** で、見出しと今見えている行（検索・列の絞り込み・並べ替え・最下行固定）を同じフォルダの新しいCSVにする。元のファイルは書き込まない
 5. 既存ファイルを直すときは **Edit** に切り替える。絞り込みはそのまま残るので、探した行だけを直せる。隠れている行には触れない。絞り込み欄を空にすると表全体を編集できる（ソートは Edit に持ち越さない）。絞り込み中は複数行の貼り付けを断る
@@ -136,6 +137,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 - 大きいCSVは、画面に見えている行から描く。残りはスクロールしたときに出る
 - Viewは開いているファイルを変えない。**絞り込みを書き出す** は隣に新しいCSVを作る。EditはVault内の同じ `.csv` に保存する
+- `.tsv` は `.csv` と同じ表で開く。保存時はタブ区切りのまま。CSV と TSV を変換する機能はない
 - コピーと貼り付けはOSのクリップボードを使う。別の表計算プラグインは不要
 - `.xlsx` や `.docx` はそのまま開けない。Excel や Word でセルをコピーしてから TableCSV に貼る
 - ドイツ / EU の Excel は `;` 区切り。保存時もそのまま。`1,5` は1セル。UI または OS がドイツ語なら並べ替えで数値として扱う
@@ -144,7 +146,7 @@ Vault内の `.csv` を表として開きます。閲覧と絞り込み、セル�
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **2.2.0** — 表全体を貼り付け。セル内改行でテキストが崩れるときは HTML の表を優先する。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **2.3.0** — `.tsv` を `.csv` と同じ表として開く。CSV と TSV の変換はしない。
 
 ### 作者
 
@@ -171,13 +173,13 @@ MIT
 <details>
 <summary><strong>Deutsch</strong> (aufklappen)</summary>
 
-Öffnet `.csv`-Dateien als Tabellen im Vault. Anzeigen und filtern, oder Zellen, Zeilen und Spalten bearbeiten. Neue CSV aus einem Ordner erstellen.
+Öffnet `.csv`- und `.tsv`-Dateien als Tabellen im Vault. Anzeigen und filtern, oder Zellen, Zeilen und Spalten bearbeiten. Neue CSV aus einem Ordner erstellen.
 
 Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 
 ### Funktionen
 
-- CSV-Dateien als Tabelle anzeigen
+- CSV- und TSV-Dateien als Tabelle anzeigen
 - **Neu**: CSV aus einem Ordner oder über die Befehlspalette erstellen (öffnet im Bearbeiten-Modus)
 - Kopfzeile bleibt beim Scrollen sichtbar
 - **Ansicht**: Zeilen filtern und Spalten sortieren (Datei bleibt unverändert)
@@ -200,7 +202,7 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 
 ### Versionshinweise
 
-Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **2.2.0** — gesamte Tabelle aus der Zwischenablage einfügen; HTML-Tabellen haben Vorrang, wenn Klartext durch Zeilenumbrüche zerfällt.
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **2.3.0** — `.tsv` wie `.csv` öffnen. Keine Umwandlung CSV ↔ TSV.
 
 ### Lizenz
 
