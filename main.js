@@ -1,5 +1,5 @@
 /*
-TableCSV 2.3.0
+TableCSV 2.4.0
 */
 'use strict';
 
@@ -3564,11 +3564,24 @@ class TableCsvView extends obsidian.TextFileView {
     });
 
     if (!rows.length) {
+      var tsv = isTsvFile(this.file);
       el.createEl('p', {
         text:
           this.mode === 'edit'
-            ? t('空のCSVです。行を追加して始めてください。', 'Empty CSV. Insert a row to start.', 'Leere CSV. Zum Starten eine Zeile einfügen.')
-            : t('空のCSV', 'Empty CSV', 'Leere CSV'),
+            ? tsv
+              ? t(
+                  '空のTSVです。行を追加して始めてください。',
+                  'Empty TSV. Insert a row to start.',
+                  'Leere TSV. Zum Starten eine Zeile einfügen.',
+                )
+              : t(
+                  '空のCSVです。行を追加して始めてください。',
+                  'Empty CSV. Insert a row to start.',
+                  'Leere CSV. Zum Starten eine Zeile einfügen.',
+                )
+            : tsv
+              ? t('空のTSV', 'Empty TSV', 'Leere TSV')
+              : t('空のCSV', 'Empty CSV', 'Leere CSV'),
       });
       return;
     }
@@ -4012,10 +4025,11 @@ function uniqueSiblingCsvPath(vault, file, suffix) {
   }
 }
 
-function uniqueCsvPath(vault, folderPath) {
+function uniqueUntitledPath(vault, folderPath, ext) {
+  var suffix = '.' + ext;
   var n = 0;
   while (true) {
-    var name = n === 0 ? 'Untitled.csv' : 'Untitled ' + n + '.csv';
+    var name = n === 0 ? 'Untitled' + suffix : 'Untitled ' + n + suffix;
     var path = joinVaultPath(folderPath, name);
     if (!vault.getAbstractFileByPath(path)) {
       return path;
@@ -4119,6 +4133,13 @@ class TableCsvPlugin extends obsidian.Plugin {
       },
     });
     this.addCommand({
+      id: 'create-new-tsv',
+      name: t('TSVを新規作成', 'Create new TSV', 'Neue TSV erstellen'),
+      callback: function () {
+        self.createNewTsv();
+      },
+    });
+    this.addCommand({
       id: 'undo-last-edit',
       name: t('直前の編集を取り消す', 'Undo last edit', 'Letzte Bearbeitung rückgängig'),
       checkCallback: function (checking) {
@@ -4204,6 +4225,14 @@ class TableCsvPlugin extends obsidian.Plugin {
                 self.createNewCsv(file);
               });
           });
+          menu.addItem(function (item) {
+            item
+              .setTitle(t('TSVを新規作成', 'New TSV', 'Neue TSV'))
+              .setIcon('table')
+              .onClick(function () {
+                self.createNewTsv(file);
+              });
+          });
         }
       }),
     );
@@ -4214,6 +4243,14 @@ class TableCsvPlugin extends obsidian.Plugin {
   }
 
   async createNewCsv(folder) {
+    await this.createNewTableFile(folder, 'csv');
+  }
+
+  async createNewTsv(folder) {
+    await this.createNewTableFile(folder, 'tsv');
+  }
+
+  async createNewTableFile(folder, ext) {
     var vault = this.app.vault;
     var parent = folder instanceof obsidian.TFolder ? folder : null;
     if (!parent) {
@@ -4221,7 +4258,7 @@ class TableCsvPlugin extends obsidian.Plugin {
       parent = active && active.parent ? active.parent : vault.getRoot();
     }
     var folderPath = parent.path === '/' ? '' : parent.path;
-    var path = uniqueCsvPath(vault, folderPath);
+    var path = uniqueUntitledPath(vault, folderPath, ext);
     try {
       var file = await vault.create(path, '');
       var leaf = this.app.workspace.getLeaf(false);
@@ -4230,9 +4267,15 @@ class TableCsvPlugin extends obsidian.Plugin {
         leaf.view.setMode('edit');
       }
     } catch (e) {
-      new obsidian.Notice(
-        t('CSVを作成できませんでした', 'Could not create CSV', 'CSV konnte nicht erstellt werden'),
-      );
+      if (ext === 'tsv') {
+        new obsidian.Notice(
+          t('TSVを作成できませんでした', 'Could not create TSV', 'TSV konnte nicht erstellt werden'),
+        );
+      } else {
+        new obsidian.Notice(
+          t('CSVを作成できませんでした', 'Could not create CSV', 'CSV konnte nicht erstellt werden'),
+        );
+      }
     }
   }
 

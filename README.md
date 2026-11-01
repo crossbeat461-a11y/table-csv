@@ -19,12 +19,12 @@
 
 ## English
 
-Open `.csv` and `.tsv` files as tables inside your vault. View and filter, or edit cells, rows, and columns. Create a new CSV from a folder.
+Open `.csv` and `.tsv` files as tables inside your vault. View and filter, or edit cells, rows, and columns. Create a new CSV or TSV from a folder.
 
 ### Features
 
 - Open any CSV or TSV file as a clean table view
-- **Create** a new CSV from a folder (right-click) or the command palette; it opens in Edit
+- **Create** a new CSV or TSV from a folder (right-click) or the command palette; it opens in Edit. A new TSV uses a tab delimiter
 - Sticky header row for easier scrolling
 - **View** mode: text filter to narrow rows (does not change the file)
 - **View** mode: click a column header to sort (asc → desc → clear; does not change the file)
@@ -49,7 +49,7 @@ Open `.csv` and `.tsv` files as tables inside your vault. View and filter, or ed
 ### How to use
 
 1. Install **TableCSV** from Community plugins and enable it
-2. Right-click a folder and choose **New CSV**, or run the same from the command palette. You can also open an existing `.csv` or `.tsv`
+2. Right-click a folder and choose **New CSV** or **New TSV**, or run the same from the command palette. You can also open an existing `.csv` or `.tsv`
 3. A new file opens in **Edit**. Existing files start in **View**. Type in the filter box to narrow matching rows. Use the row under the header to filter that column. Click a column header to sort. Right-click a header to set the column type. Check **Pin last row** when the bottom row is a total you do not want moved. Check **Pin first column** when the table is wide and you want the leftmost column to stay put
 4. **Export filtered** creates a new CSV next to the current file with the header plus the rows you can see (search, column filters, sort, and pin last row). The original file is not written
 5. Switch to **Edit** to change an existing file. The filter stays on, so you can change only the rows you searched for; hidden rows are not touched. Clear the filter box to edit the whole table. (Sort is not carried into Edit.) A multi-row paste is refused while filtered
@@ -61,7 +61,7 @@ Open `.csv` and `.tsv` files as tables inside your vault. View and filter, or ed
 
 - Large CSVs draw the rows on screen; the rest wait until you scroll
 - View mode does not change the open file. **Export filtered** creates a new CSV beside it. Edit mode saves to the same `.csv` file in the vault
-- `.tsv` opens in the same table as `.csv`. Saving keeps the tab delimiter. There is no command to convert CSV to TSV or TSV to CSV
+- `.tsv` opens in the same table as `.csv`. A new TSV is tab-delimited. Saving keeps the tab delimiter. There is no command to convert CSV to TSV or TSV to CSV
 - Copy and paste use the system clipboard. They do not require a companion spreadsheet plugin
 - Paste does not open `.xlsx` or `.docx` files. Copy the cells in Excel or Word first, then paste into TableCSV
 - German / EU Excel CSV uses `;`. TableCSV keeps that delimiter. Values like `1,5` stay in one cell. Column sort reads them as numbers when the UI or OS is German
@@ -70,7 +70,7 @@ Open `.csv` and `.tsv` files as tables inside your vault. View and filter, or ed
 
 ### Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md). Latest: **2.3.0** — open `.tsv` like `.csv`. No CSV ↔ TSV conversion.
+See [CHANGELOG.md](./CHANGELOG.md). Latest: **2.4.0** — create a new `.tsv` from a folder or the command palette.
 
 ### Author
 
@@ -95,12 +95,12 @@ MIT
 <details open>
 <summary><strong>日本語</strong>（クリックで開閉）</summary>
 
-Vault内の `.csv` と `.tsv` を表として開きます。閲覧と絞り込み、セル・行・列の編集ができます。フォルダから CSV を新規作成できます。
+Vault内の `.csv` と `.tsv` を表として開きます。閲覧と絞り込み、セル・行・列の編集ができます。フォルダから CSV または TSV を新規作成できます。
 
 ### 機能
 
 - CSV / TSV ファイルを表形式で表示
-- **新規作成**: フォルダの右クリック、またはコマンドパレット。編集モードで開く
+- **新規作成**: フォルダの右クリック、またはコマンドパレットから CSV / TSV。編集モードで開く。空の TSV はタブ区切り
 - 見出し行を固定してスクロールしやすい
 - **View（閲覧）**: 文字で行を絞り込む（ファイルは変更しない）
 - **View（閲覧）**: 列見出しをクリックして並べ替え（昇順 → 降順 → 解除。ファイルは変更しない）
@@ -125,7 +125,7 @@ Vault内の `.csv` と `.tsv` を表として開きます。閲覧と絞り込�
 ### 使い方
 
 1. コミュニティプラグインから **TableCSV** を入れて有効にする
-2. ファイル一覧のフォルダを右クリックして **CSVを新規作成**、またはコマンドパレットで同じ操作。既存の `.csv` や `.tsv` を開いてもよい
+2. ファイル一覧のフォルダを右クリックして **CSVを新規作成** または **TSVを新規作成**、またはコマンドパレットで同じ操作。既存の `.csv` や `.tsv` を開いてもよい
 3. 新規ファイルは **Edit**。既存ファイルは最初 **View**。上の検索欄で行を絞り込む。見出しの下の欄で、その列だけを絞る。列見出しをクリックすると並べ替え。列見出しを右クリックすると型を指定できる。**最下行を固定** にチェックすると、合計行など最後の1行は並べ替えされず下に残る。表が横に長いときは **先頭列を固定**
 4. **絞り込みを書き出す** で、見出しと今見えている行（検索・列の絞り込み・並べ替え・最下行固定）を同じフォルダの新しいCSVにする。元のファイルは書き込まない
 5. 既存ファイルを直すときは **Edit** に切り替える。絞り込みはそのまま残るので、探した行だけを直せる。隠れている行には触れない。絞り込み欄を空にすると表全体を編集できる（ソートは Edit に持ち越さない）。絞り込み中は複数行の貼り付けを断る
@@ -137,7 +137,7 @@ Vault内の `.csv` と `.tsv` を表として開きます。閲覧と絞り込�
 
 - 大きいCSVは、画面に見えている行から描く。残りはスクロールしたときに出る
 - Viewは開いているファイルを変えない。**絞り込みを書き出す** は隣に新しいCSVを作る。EditはVault内の同じ `.csv` に保存する
-- `.tsv` は `.csv` と同じ表で開く。保存時はタブ区切りのまま。CSV と TSV を変換する機能はない
+- `.tsv` は `.csv` と同じ表で開く。新規の TSV はタブ区切り。保存時もタブのまま。CSV と TSV を変換する機能はない
 - コピーと貼り付けはOSのクリップボードを使う。別の表計算プラグインは不要
 - `.xlsx` や `.docx` はそのまま開けない。Excel や Word でセルをコピーしてから TableCSV に貼る
 - ドイツ / EU の Excel は `;` 区切り。保存時もそのまま。`1,5` は1セル。UI または OS がドイツ語なら並べ替えで数値として扱う
@@ -146,7 +146,7 @@ Vault内の `.csv` と `.tsv` を表として開きます。閲覧と絞り込�
 
 ### 更新履歴
 
-[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **2.3.0** — `.tsv` を `.csv` と同じ表として開く。CSV と TSV の変換はしない。
+[CHANGELOG.md](./CHANGELOG.md) を参照。最新は **2.4.0** — フォルダまたはコマンドパレットから TSV を新規作成する。
 
 ### 作者
 
@@ -173,14 +173,14 @@ MIT
 <details>
 <summary><strong>Deutsch</strong> (aufklappen)</summary>
 
-Öffnet `.csv`- und `.tsv`-Dateien als Tabellen im Vault. Anzeigen und filtern, oder Zellen, Zeilen und Spalten bearbeiten. Neue CSV aus einem Ordner erstellen.
+Öffnet `.csv`- und `.tsv`-Dateien als Tabellen im Vault. Anzeigen und filtern, oder Zellen, Zeilen und Spalten bearbeiten. Neue CSV oder TSV aus einem Ordner erstellen.
 
 Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 
 ### Funktionen
 
 - CSV- und TSV-Dateien als Tabelle anzeigen
-- **Neu**: CSV aus einem Ordner oder über die Befehlspalette erstellen (öffnet im Bearbeiten-Modus)
+- **Neu**: CSV oder TSV aus einem Ordner oder über die Befehlspalette erstellen (öffnet im Bearbeiten-Modus). Eine neue TSV nutzt Tab
 - Kopfzeile bleibt beim Scrollen sichtbar
 - **Ansicht**: Zeilen filtern und Spalten sortieren (Datei bleibt unverändert)
 - **Ansicht und Bearbeiten**: Eine Filterzeile unter der Kopfzeile grenzt nur diese Spalte ein (Text enthält; Zahl/Datum Min/Max; Kontrollkästchen alle / an / aus / leer). Zusammen mit dem Suchfeld. Steht nicht in der CSV
@@ -202,7 +202,7 @@ Die Oberfläche folgt der Obsidian-Sprache (Japanisch, Englisch, Deutsch).
 
 ### Versionshinweise
 
-Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **2.3.0** — `.tsv` wie `.csv` öffnen. Keine Umwandlung CSV ↔ TSV.
+Siehe [CHANGELOG.md](./CHANGELOG.md). Aktuell: **2.4.0** — neue `.tsv` aus Ordner oder Befehlspalette.
 
 ### Lizenz
 

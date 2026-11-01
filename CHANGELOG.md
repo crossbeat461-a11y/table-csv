@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.4.0
+
+- Create a new `.tsv` from a folder (file explorer) or the command palette. It opens in Edit with a tab delimiter. CSV creation is unchanged. There is no CSV ↔ TSV conversion
+- Empty files say Empty TSV or Empty CSV according to the extension (View and Edit)
+
+### 日本語
+
+- フォルダの右クリック、またはコマンドパレットから **TSVを新規作成**。編集モードで開く。空のファイルはタブ区切り。CSV の新規作成はこれまでどおり。CSV と TSV の変換はしない
+- 空のときは拡張子に合わせて「空のTSV」または「空のCSV」と出す（閲覧・編集）
+
+### Deutsch
+
+- Neue `.tsv` aus einem Ordner oder über die Befehlspalette. Öffnet im Bearbeiten-Modus mit Tab als Trennzeichen. CSV-Erstellung bleibt unverändert. Keine Umwandlung CSV ↔ TSV
+- Leere Dateien zeigen „Leere TSV“ oder „Leere CSV“ je nach Endung (Ansicht und Bearbeiten)
+
 ## 2.3.0
 
 - View and Edit: open `.tsv` the same way as `.csv` (same table, filter, and save). An empty `.tsv` uses a tab delimiter. Saving keeps tabs. There is no CSV ↔ TSV conversion
